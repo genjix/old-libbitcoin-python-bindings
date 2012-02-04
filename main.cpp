@@ -127,7 +127,18 @@ public:
       : accept_(accept)
     {
     }
+    void accept(python::object handle_accept)
+    {
+        accept_->accept(
+            std::bind(&acceptor_wrapper::call_handle_accept,
+                ph::_1, ph::_2, handle_accept));
+    }
 private:
+    static void call_handle_accept(const std::error_code& ec,
+        bc::channel_ptr node, python::object handle_accept)
+    {
+        handle_accept(ec, node);
+    }
     bc::acceptor_ptr accept_;
 };
 
@@ -801,6 +812,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
     ;
     // network stuff
     class_<acceptor_wrapper>("acceptor", no_init)
+        .def("accept", &acceptor_wrapper::accept)
     ;
     class_<channel_wrapper>("channel", no_init)
         .def("send_version", &channel_wrapper::send<bc::message::version>)
