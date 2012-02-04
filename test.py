@@ -1,8 +1,40 @@
 import bitcoin
 
+def handle_send(ec):
+    if ec:
+        print ec
+
+def read_version_reply(ec, vers):
+    if ec:
+        print ec
+        return
+    print vers.address_me.ip
+    print vers.user_agent
+
+chan = None
+
 def handle_connect(ec, channel):
     if ec:
         print ec
+    vers = bitcoin.version()
+    vers.version = 60000
+    vers.services = 1
+    vers.address_me.servies = 1
+    vers.address_me.ip = \
+        [0, 0, 0, 0, 0, 0, 0, 0, 
+         0, 0, 255, 255, 127, 0, 0, 1]
+    vers.address_me.port = 8333
+    vers.address_you.services = 1
+    vers.address_you.ip = \
+        [0, 0, 0, 0, 0, 0, 0, 0, 
+         0, 0, 255, 255, 127, 0, 0, 1]
+    vers.address_you.port = 8333
+    vers.user_agent = "/libbitcoin:0.4/example:1/";
+    vers.start_height = 0
+    vers.nonce = 42
+    channel.send_version(vers, handle_send)
+    chan = channel
+    channel.subscribe_version(read_version_reply)
     print 'connect'
 
 d = bitcoin.data_chunk("001212")
@@ -34,6 +66,8 @@ print s.operations()
 print s.type()
 
 net = bitcoin.network()
+#hs = bitcoin.handshake()
+#hs.connect(net, "localhost", 8333, handle_connect)
 net.connect("localhost", 8333, handle_connect)
 raw_input()
 
