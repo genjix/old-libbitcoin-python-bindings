@@ -1,0 +1,15 @@
+import bitcoin
+
+raw_tx_repr = "010000000187493c4c15c76df9f69ddd7aeb7ffbcddad4b7a979210f19602282d5b9862581000000008a47304402202d9e9f75be9c8a4c4304931b032e1de83fd2c6af2c1154a3d2b885efd5c3bfda02201184139215fb74499eae9c71ae86354c41b4d20b95a6b1fffcb8f1c5f051288101410497d11f5c33adb7c3fed0adc637358279de04f72851b7b93fb4a8655613729047c7e2908966551b5fb7f6899f6c3dd358b57eb20a61b2c9909aa106eac6310f9fffffffff0140420f00000000001976a91407e761706c63b36e5a328fab1d94e9397f40704d88b000000000"
+raw_tx = bitcoin.data_chunk(raw_tx_repr)
+print raw_tx
+print len(raw_tx)
+
+ex = bitcoin.satoshi_exporter()
+tx = ex.load_transaction(raw_tx)
+print "txhash", bitcoin.hash_transaction(tx)
+print tx
+print ex.save_transaction(tx)
+print len(ex.save_transaction(tx))
+assert str(ex.save_transaction(tx)) == raw_tx_repr
+

@@ -388,6 +388,104 @@ public:
     }
 };
 
+class exporter_wrapper
+{
+public:
+    exporter_wrapper(bc::exporter_ptr ex)
+      : ex_(ex)
+    {
+    }
+
+    bc::data_chunk save_header(const bc::message::header& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+    bc::data_chunk save_version(const bc::message::version& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+    bc::data_chunk save_verack(const bc::message::verack& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+    bc::data_chunk save_get_address(const bc::message::get_address& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+    bc::data_chunk save_get_data(const bc::message::get_data& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+    bc::data_chunk save_get_blocks(const bc::message::get_blocks& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+    bc::data_chunk save_block(const bc::message::block& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+    bc::data_chunk save_transaction(const bc::message::transaction& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+
+    bc::message::header load_header(const bc::data_chunk& stream) const
+    {
+        return ex_->load_header(stream);
+    }
+    bool verify_header(const bc::message::header& header_msg) const
+    {
+        return ex_->verify_header(header_msg);
+    }
+
+    bool is_checksum_used(const bc::message::header& header_msg) const
+    {
+        return ex_->is_checksum_used(header_msg);
+    }
+    uint32_t load_checksum(const bc::data_chunk& stream) const
+    {
+        return ex_->load_checksum(stream);
+    }
+    bool verify_checksum(const bc::message::header& header_msg,
+        const bc::data_chunk& stream) const
+    {
+        return ex_->verify_checksum(header_msg, stream);
+    }
+
+    bc::message::version load_version(const bc::data_chunk& stream) const
+    {
+        return ex_->load_version(stream);
+    }
+    bc::message::verack load_verack(const bc::data_chunk& stream) const
+    {
+        return ex_->load_verack(stream);
+    }
+    bc::message::address load_address(const bc::data_chunk& stream) const
+    {
+        return ex_->load_address(stream);
+    }
+    bc::message::inventory load_inventory(const bc::data_chunk& stream) const
+    {
+        return ex_->load_inventory(stream);
+    }
+    bc::message::transaction load_transaction(
+        const bc::data_chunk& stream) const
+    {
+        return ex_->load_transaction(stream);
+    }
+    bc::message::block load_block(const bc::data_chunk& stream) const
+    {
+        return ex_->load_block(stream);
+    }
+private:
+    bc::exporter_ptr ex_;
+};
+
+exporter_wrapper create_satoshi_exporter()
+{
+    return exporter_wrapper(std::make_shared<bc::satoshi_exporter>());
+}
+
 BOOST_PYTHON_MODULE(_bitcoin)
 {
     using namespace boost::python;
@@ -658,6 +756,29 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("fetch_network_address", &handshake_wrapper::fetch_network_address)
         .def("set_port", &handshake_wrapper::set_port)
         .def("set_user_agent", &handshake_wrapper::set_user_agent)
+    ;
+    // exporter.hpp
+    def("satoshi_exporter", create_satoshi_exporter);
+    class_<exporter_wrapper>("exporter", no_init)
+        .def("save_header", &exporter_wrapper::save_header)
+        .def("save_version", &exporter_wrapper::save_version)
+        .def("save_verack", &exporter_wrapper::save_verack)
+        .def("save_get_address", &exporter_wrapper::save_get_address)
+        .def("save_get_data", &exporter_wrapper::save_get_data)
+        .def("save_get_blocks", &exporter_wrapper::save_get_blocks)
+        .def("save_block", &exporter_wrapper::save_block)
+        .def("save_transaction", &exporter_wrapper::save_transaction)
+        .def("load_header", &exporter_wrapper::load_header)
+        .def("verify_header", &exporter_wrapper::verify_header)
+        .def("is_checksum_used", &exporter_wrapper::is_checksum_used)
+        .def("load_checksum", &exporter_wrapper::load_checksum)
+        .def("verify_checksum", &exporter_wrapper::verify_checksum)
+        .def("load_version", &exporter_wrapper::load_version)
+        .def("load_verack", &exporter_wrapper::load_verack)
+        .def("load_address", &exporter_wrapper::load_address)
+        .def("load_inventory", &exporter_wrapper::load_inventory)
+        .def("load_transaction", &exporter_wrapper::load_transaction)
+        .def("load_block", &exporter_wrapper::load_block)
     ;
 }
 
