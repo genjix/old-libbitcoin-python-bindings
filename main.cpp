@@ -303,6 +303,23 @@ private:
     bc::handshake_ptr hs_;
 };
 
+template <typename ListType>
+std::string raw_list(const ListType& listobj)
+{
+    return std::string(listobj.begin(), listobj.end());
+}
+template <typename HashType>
+void set_raw_hash(HashType& hashobj, const std::string& raw_repr)
+{
+    for (size_t i = 0; i < hashobj.size() && i < raw_repr.size(); ++i)
+        hashobj[i] = raw_repr[i];
+}
+void set_raw_data_chunk(bc::data_chunk& d, const std::string& raw_repr)
+{
+    d.resize(raw_repr.size());
+    std::copy(raw_repr.begin(), raw_repr.end(), d.begin());
+}
+
 template <typename ListType, typename ClassType>
 ClassType& extend_vector(ClassType& pyclass)
 {
@@ -343,6 +360,7 @@ ClassType& extend_hash(ClassType& pyclass)
         .def("__getitem__", &std_item<HashType>::get)
         .def("__setitem__", &std_item<HashType>::set)
         .def("__eq__", hash_eq<HashType>)
+        .add_property("raw", raw_list<HashType>, set_raw_hash<HashType>)
     ;
     return pyclass;
 }
@@ -538,6 +556,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         class_<bc::data_chunk>("_data_chunk")
             .def("__repr__", bc::pretty_hex<bc::data_chunk>)
             .def("__str__", bc::pretty_hex<bc::data_chunk>)
+            .add_property("raw", raw_list<bc::data_chunk>, set_raw_data_chunk)
         ;
     extend_vector<bc::data_chunk>(data_chunk_class);
     def("hash_from_pretty", bc::hash_from_pretty);
