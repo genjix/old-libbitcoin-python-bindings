@@ -486,6 +486,48 @@ exporter_wrapper create_satoshi_exporter()
     return exporter_wrapper(std::make_shared<bc::satoshi_exporter>());
 }
 
+class elliptic_curve_key_wrapper
+{
+public:
+    elliptic_curve_key_wrapper()
+    {
+        ec_ = std::make_shared<bc::elliptic_curve_key>();
+    }
+
+    bool set_public_key(const bc::data_chunk& pubkey)
+    {
+        return ec_->set_public_key(pubkey);
+    }
+    bc::data_chunk public_key() const
+    {
+        return ec_->public_key();
+    }
+    bool verify(const bc::hash_digest& hash, const bc::data_chunk& signature)
+    {
+        return ec_->verify(hash, signature);
+    }
+
+    bool new_key_pair()
+    {
+        return ec_->new_key_pair();
+    }
+    bool set_private_key(const bc::private_data& privkey)
+    {
+        return ec_->set_private_key(privkey);
+    }
+    bc::private_data private_key() const
+    {
+        return ec_->private_key();
+    }
+    bc::data_chunk sign(const bc::hash_digest& hash) const
+    {
+        return ec_->sign(hash);
+    }
+private:
+    // boost::python doesnt like deleted copy constructors
+    std::shared_ptr<bc::elliptic_curve_key> ec_;
+};
+
 BOOST_PYTHON_MODULE(_bitcoin)
 {
     using namespace boost::python;
@@ -513,7 +555,17 @@ BOOST_PYTHON_MODULE(_bitcoin)
     def("public_key_to_address", bc::public_key_to_address);
     def("address_to_short_hash", bc::address_to_short_hash);
     // block.hpp
+    enum_<bc::block_status>("block_status")
+        .value("orphan", bc::block_status::orphan)
+        .value("confirmed", bc::block_status::confirmed)
+        .value("rejected", bc::block_status::rejected)
+    ;
+    class_<bc::block_info>("block_info")
+        .def_readwrite("status", &bc::block_info::status)
+        .def_readwrite("depth", &bc::block_info::depth)
+    ;
     def("block_value", bc::block_value);
+    def("block_work", bc::block_work);
     def("hash_block_header", bc::hash_block_header);
     def("block_locator_indices", bc::block_locator_indices);
     def("genesis_block", bc::genesis_block);
@@ -790,6 +842,16 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("load_inventory", &exporter_wrapper::load_inventory)
         .def("load_transaction", &exporter_wrapper::load_transaction)
         .def("load_block", &exporter_wrapper::load_block)
+    ;
+    // utility/elliptic_curve_key.hpp
+    class_<elliptic_curve_key_wrapper>("elliptic_curve_key")
+        .def("set_public_key", &elliptic_curve_key_wrapper::set_public_key)
+        .def("public_key", &elliptic_curve_key_wrapper::public_key)
+        .def("verify", &elliptic_curve_key_wrapper::verify)
+        .def("new_key_pair", &elliptic_curve_key_wrapper::new_key_pair)
+        .def("set_private_key", &elliptic_curve_key_wrapper::set_private_key)
+        .def("private_key", &elliptic_curve_key_wrapper::private_key)
+        .def("sign", &elliptic_curve_key_wrapper::sign)
     ;
 }
 
