@@ -144,6 +144,68 @@ public:
     {
         node_->send(packet, pyfunction<const std::error_code&>(handle_send));
     }
+    void send_raw(const bc::message::header& packet,
+        const bc::data_chunk& payload, python::object handle_send)
+    {
+        node_->send_raw(packet, payload,
+            pyfunction<const std::error_code&>(handle_send));
+    }
+
+    void subscribe_version(python::object handle_receive)
+    {
+        node_->subscribe_version(pyfunction<const std::error_code&,
+            const bc::message::version&>(handle_receive));
+    }
+    void subscribe_verack(python::object handle_receive)
+    {
+        node_->subscribe_verack(pyfunction<const std::error_code&,
+            const bc::message::verack&>(handle_receive));
+    }
+    void subscribe_address(python::object handle_receive)
+    {
+        node_->subscribe_address(pyfunction<const std::error_code&,
+            const bc::message::address&>(handle_receive));
+    }
+    void subscribe_inventory(python::object handle_receive)
+    {
+        node_->subscribe_inventory(pyfunction<const std::error_code&,
+            const bc::message::inventory&>(handle_receive));
+    }
+    void subscribe_get_data(python::object handle_receive)
+    {
+        //node_->subscribe_get_data(pyfunction<const std::error_code&,
+        //    const bc::message::get_data&>(handle_receive));
+    }
+    void subscribe_get_blocks(python::object handle_receive)
+    {
+        //node_->subscribe_get_blocks(pyfunction<const std::error_code&,
+        //    const bc::message::get_blocks&>(handle_receive));
+    }
+    void subscribe_transaction(python::object handle_receive)
+    {
+        //node_->subscribe_transaction(pyfunction<const std::error_code&,
+        //    const bc::message::transaction&>(handle_receive));
+    }
+    void subscribe_block(python::object handle_receive)
+    {
+        node_->subscribe_block(pyfunction<const std::error_code&,
+            const bc::message::block&>(handle_receive));
+    }
+    void subscribe_get_address(python::object handle_receive)
+    {
+        //node_->subscribe_get_address(pyfunction<const std::error_code&,
+        //    const bc::message::get_address&>(handle_receive));
+    }
+    void subscribe_raw(python::object handle_receive)
+    {
+        //node_->subscribe_raw(pyfunction<const std::error_code&,
+        //    const bc::message::raw&>(handle_receive));
+    }
+
+    bc::channel_ptr channel() const
+    {
+        return node_;
+    }
 private:
     bc::channel_ptr node_;
 };
@@ -168,6 +230,11 @@ public:
             std::bind(&network_wrapper::post_connect,
                 ph::_1, ph::_2, handle_connect));
     }
+
+    bc::network_ptr net() const
+    {
+        return net_;
+    }
 private:
     static void post_listen(const std::error_code& ec,
         bc::acceptor_ptr accept, python::object handle_listen)
@@ -182,6 +249,58 @@ private:
         handle_connect(ec, channel_wrapper(node));
     }
     bc::network_ptr net_;
+};
+
+class handshake_wrapper
+{
+public:
+    handshake_wrapper()
+    {
+        hs_ = std::make_shared<bc::handshake>();
+    }
+    void connect(network_wrapper net_wrap, const std::string& hostname,
+        uint16_t port, python::object handle_connect)
+    {
+        hs_->connect(net_wrap.net(), hostname, port,
+            std::bind(&handshake_wrapper::post_connect,
+                ph::_1, ph::_2, handle_connect));
+    }
+    void start(channel_wrapper node, python::object handle_handshake)
+    {
+        hs_->start(node.channel(),
+            pyfunction<const std::error_code&>(handle_handshake));
+    }
+    void discover_external_ip(python::object handle_discover)
+    {
+        hs_->discover_external_ip(
+            pyfunction<const std::error_code&,
+                const bc::message::ip_address&>(handle_discover));
+    }
+    void fetch_network_address(python::object handle_fetch)
+    {
+        hs_->fetch_network_address(
+            pyfunction<const std::error_code&,
+                const bc::message::network_address&>(handle_fetch));
+    }
+    void set_port(uint16_t port, python::object handle_set)
+    {
+        hs_->set_port(port,
+            pyfunction<const std::error_code&>(handle_set));
+    }
+    void set_user_agent(const std::string& user_agent,
+        python::object handle_set)
+    {
+        hs_->set_user_agent(user_agent,
+            pyfunction<const std::error_code&>(handle_set));
+    }
+private:
+    static void post_connect(const std::error_code& ec,
+        bc::channel_ptr node, python::object handle_connect)
+    {
+        ensure_gil eg;
+        handle_connect(ec, channel_wrapper(node));
+    }
+    bc::handshake_ptr hs_;
 };
 
 template <typename ListType, typename ClassType>
@@ -355,7 +474,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def_readwrite("address_me", &bc::message::version::address_me)
         .def_readwrite("address_you", &bc::message::version::address_you)
         .def_readwrite("nonce", &bc::message::version::nonce)
-        .def_readwrite("sub_version_num", &bc::message::version::user_agent)
+        .def_readwrite("user_agent", &bc::message::version::user_agent)
         .def_readwrite("start_height", &bc::message::version::start_height)
     ;
     class_<bc::message::verack>("verack")
@@ -504,11 +623,41 @@ BOOST_PYTHON_MODULE(_bitcoin)
     class_<acceptor_wrapper>("acceptor", no_init)
     ;
     class_<channel_wrapper>("channel", no_init)
-        //.def("send_version", &channel_wrapper::send<bc::version>)
+        .def("send_version", &channel_wrapper::send<bc::message::version>)
+        .def("send_verack", &channel_wrapper::send<bc::message::verack>)
+        //.def("send_address", &channel_wrapper::send<bc::message::address>)
+        //.def("send_inventory", &channel_wrapper::send<bc::message::inventory>)
+        .def("send_get_data", &channel_wrapper::send<bc::message::get_data>)
+        .def("send_get_blocks", &channel_wrapper::send<bc::message::get_blocks>)
+        .def("send_transaction",
+            &channel_wrapper::send<bc::message::transaction>)
+        .def("send_block", &channel_wrapper::send<bc::message::block>)
+        .def("send_get_address",
+            &channel_wrapper::send<bc::message::get_address>)
+        .def("send_raw", &channel_wrapper::send_raw)
+
+        .def("subscribe_version", &channel_wrapper::subscribe_version)
+        .def("subscribe_verack", &channel_wrapper::subscribe_verack)
+        .def("subscribe_address", &channel_wrapper::subscribe_address)
+        .def("subscribe_inventory", &channel_wrapper::subscribe_inventory)
+        //.def("subscribe_get_data", &channel_wrapper::subscribe_get_data)
+        //.def("subscribe_get_blocks", &channel_wrapper::subscribe_get_blocks)
+        //.def("subscribe_transaction", &channel_wrapper::subscribe_transaction)
+        .def("subscribe_block", &channel_wrapper::subscribe_block)
+        .def("subscribe_get_address", &channel_wrapper::subscribe_get_address)
+        .def("subscribe_raw", &channel_wrapper::subscribe_raw)
     ;
     class_<network_wrapper>("network")
         .def("listen", &network_wrapper::listen)
         .def("connect", &network_wrapper::connect)
+    ;
+    class_<handshake_wrapper>("handshake")
+        .def("connect", &handshake_wrapper::connect)
+        .def("start", &handshake_wrapper::start)
+        .def("discover_external_ip", &handshake_wrapper::discover_external_ip)
+        .def("fetch_network_address", &handshake_wrapper::fetch_network_address)
+        .def("set_port", &handshake_wrapper::set_port)
+        .def("set_user_agent", &handshake_wrapper::set_user_agent)
     ;
 }
 
