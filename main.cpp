@@ -518,8 +518,19 @@ BOOST_PYTHON_MODULE(_bitcoin)
     def("block_locator_indices", bc::block_locator_indices);
     def("genesis_block", bc::genesis_block);
     // constants.hpp
-    // not sure how to export constants in boost::python
+    scope().attr("block_reward") = bc::block_reward;
+    scope().attr("reward_interval") = bc::reward_interval;
+    scope().attr("coinbase_maturity") = bc::coinbase_maturity;
+    scope().attr("magic_value") = bc::magic_value;
     def("coin_price", bc::coin_price);
+    scope().attr("max_money") = bc::max_money();
+    scope().attr("null_hash") = bc::null_hash;
+    scope().attr("null_short_hash") = bc::null_short_hash;
+    scope().attr("max_bits") = bc::max_bits;
+    def("max_target", bc::max_target);
+    scope().attr("target_timespan") = bc::target_timespan;
+    scope().attr("target_spacing") = bc::target_spacing;
+    scope().attr("readjustment_interval") = bc::readjustment_interval;
     // transaction.hpp
     bc::hash_digest (*hash_transaction)(
         const bc::message::transaction& transaction) = bc::hash_transaction;
