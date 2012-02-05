@@ -214,8 +214,9 @@ public:
     }
     void subscribe_raw(python::object handle_receive)
     {
-        //node_->subscribe_raw(pyfunction<const std::error_code&,
-        //    const bc::message::raw&>(handle_receive));
+        node_->subscribe_raw(pyfunction<
+            const std::error_code&, const bc::message::header&,
+            const bc::data_chunk&>(handle_receive));
     }
 
     bc::channel_ptr channel() const
@@ -519,48 +520,6 @@ exporter_wrapper create_satoshi_exporter()
 {
     return exporter_wrapper(std::make_shared<bc::satoshi_exporter>());
 }
-
-class elliptic_curve_key_wrapper
-{
-public:
-    elliptic_curve_key_wrapper()
-    {
-        ec_ = std::make_shared<bc::elliptic_curve_key>();
-    }
-
-    bool set_public_key(const bc::data_chunk& pubkey)
-    {
-        return ec_->set_public_key(pubkey);
-    }
-    bc::data_chunk public_key() const
-    {
-        return ec_->public_key();
-    }
-    bool verify(const bc::hash_digest& hash, const bc::data_chunk& signature)
-    {
-        return ec_->verify(hash, signature);
-    }
-
-    bool new_key_pair()
-    {
-        return ec_->new_key_pair();
-    }
-    bool set_private_key(const bc::private_data& privkey)
-    {
-        return ec_->set_private_key(privkey);
-    }
-    bc::private_data private_key() const
-    {
-        return ec_->private_key();
-    }
-    bc::data_chunk sign(const bc::hash_digest& hash) const
-    {
-        return ec_->sign(hash);
-    }
-private:
-    // boost::python doesnt like deleted copy constructors
-    std::shared_ptr<bc::elliptic_curve_key> ec_;
-};
 
 BOOST_PYTHON_MODULE(_bitcoin)
 {
@@ -881,14 +840,14 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("load_block", &exporter_wrapper::load_block)
     ;
     // utility/elliptic_curve_key.hpp
-    class_<elliptic_curve_key_wrapper>("elliptic_curve_key")
-        .def("set_public_key", &elliptic_curve_key_wrapper::set_public_key)
-        .def("public_key", &elliptic_curve_key_wrapper::public_key)
-        .def("verify", &elliptic_curve_key_wrapper::verify)
-        .def("new_key_pair", &elliptic_curve_key_wrapper::new_key_pair)
-        .def("set_private_key", &elliptic_curve_key_wrapper::set_private_key)
-        .def("private_key", &elliptic_curve_key_wrapper::private_key)
-        .def("sign", &elliptic_curve_key_wrapper::sign)
+    class_<bc::elliptic_curve_key>("elliptic_curve_key")
+        .def("set_public_key", &bc::elliptic_curve_key::set_public_key)
+        .def("public_key", &bc::elliptic_curve_key::public_key)
+        .def("verify", &bc::elliptic_curve_key::verify)
+        .def("new_key_pair", &bc::elliptic_curve_key::new_key_pair)
+        .def("set_private_key", &bc::elliptic_curve_key::set_private_key)
+        .def("private_key", &bc::elliptic_curve_key::private_key)
+        .def("sign", &bc::elliptic_curve_key::sign)
     ;
 }
 
