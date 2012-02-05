@@ -182,6 +182,11 @@ public:
         node_->subscribe_address(pyfunction<const std::error_code&,
             const bc::message::address&>(handle_receive));
     }
+    void subscribe_get_address(python::object handle_receive)
+    {
+        node_->subscribe_get_address(pyfunction<const std::error_code&,
+            const bc::message::get_address&>(handle_receive));
+    }
     void subscribe_inventory(python::object handle_receive)
     {
         node_->subscribe_inventory(pyfunction<const std::error_code&,
@@ -189,28 +194,23 @@ public:
     }
     void subscribe_get_data(python::object handle_receive)
     {
-        //node_->subscribe_get_data(pyfunction<const std::error_code&,
-        //    const bc::message::get_data&>(handle_receive));
+        node_->subscribe_get_data(pyfunction<const std::error_code&,
+            const bc::message::get_data&>(handle_receive));
     }
     void subscribe_get_blocks(python::object handle_receive)
     {
-        //node_->subscribe_get_blocks(pyfunction<const std::error_code&,
-        //    const bc::message::get_blocks&>(handle_receive));
+        node_->subscribe_get_blocks(pyfunction<const std::error_code&,
+            const bc::message::get_blocks&>(handle_receive));
     }
     void subscribe_transaction(python::object handle_receive)
     {
-        //node_->subscribe_transaction(pyfunction<const std::error_code&,
-        //    const bc::message::transaction&>(handle_receive));
+        node_->subscribe_transaction(pyfunction<const std::error_code&,
+            const bc::message::transaction&>(handle_receive));
     }
     void subscribe_block(python::object handle_receive)
     {
         node_->subscribe_block(pyfunction<const std::error_code&,
             const bc::message::block&>(handle_receive));
-    }
-    void subscribe_get_address(python::object handle_receive)
-    {
-        //node_->subscribe_get_address(pyfunction<const std::error_code&,
-        //    const bc::message::get_address&>(handle_receive));
     }
     void subscribe_raw(python::object handle_receive)
     {
@@ -784,26 +784,27 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("stop", &channel_wrapper::stop)
         .def("send_version", &channel_wrapper::send<bc::message::version>)
         .def("send_verack", &channel_wrapper::send<bc::message::verack>)
-        //.def("send_address", &channel_wrapper::send<bc::message::address>)
-        //.def("send_inventory", &channel_wrapper::send<bc::message::inventory>)
+        .def("send_address", &channel_wrapper::send<bc::message::address>)
+        .def("send_get_address",
+            &channel_wrapper::send<bc::message::get_address>)
+        .def("send_inventory", &channel_wrapper::send<bc::message::inventory>)
         .def("send_get_data", &channel_wrapper::send<bc::message::get_data>)
-        .def("send_get_blocks", &channel_wrapper::send<bc::message::get_blocks>)
+        .def("send_get_blocks",
+            &channel_wrapper::send<bc::message::get_blocks>)
         .def("send_transaction",
             &channel_wrapper::send<bc::message::transaction>)
         .def("send_block", &channel_wrapper::send<bc::message::block>)
-        .def("send_get_address",
-            &channel_wrapper::send<bc::message::get_address>)
         .def("send_raw", &channel_wrapper::send_raw)
 
         .def("subscribe_version", &channel_wrapper::subscribe_version)
         .def("subscribe_verack", &channel_wrapper::subscribe_verack)
         .def("subscribe_address", &channel_wrapper::subscribe_address)
-        .def("subscribe_inventory", &channel_wrapper::subscribe_inventory)
-        //.def("subscribe_get_data", &channel_wrapper::subscribe_get_data)
-        //.def("subscribe_get_blocks", &channel_wrapper::subscribe_get_blocks)
-        //.def("subscribe_transaction", &channel_wrapper::subscribe_transaction)
-        .def("subscribe_block", &channel_wrapper::subscribe_block)
         .def("subscribe_get_address", &channel_wrapper::subscribe_get_address)
+        .def("subscribe_inventory", &channel_wrapper::subscribe_inventory)
+        .def("subscribe_get_data", &channel_wrapper::subscribe_get_data)
+        .def("subscribe_get_blocks", &channel_wrapper::subscribe_get_blocks)
+        .def("subscribe_transaction", &channel_wrapper::subscribe_transaction)
+        .def("subscribe_block", &channel_wrapper::subscribe_block)
         .def("subscribe_raw", &channel_wrapper::subscribe_raw)
     ;
     class_<network_wrapper>("network")
