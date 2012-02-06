@@ -12,9 +12,11 @@ def data_chunk(strval=""):
 
 def hash_digest(strval=""):
     if len(strval) != 2 * 32:
-        raise IndexError("length of hash_digest representation should be 2 * 32 characters")
-    return hash_from_pretty(strval)
+        raise indexerror("length of hash_digest representation should be 2 * 32 characters")
+    return hash_digest_from_pretty(strval)
 
 def short_hash(strval):
-    raise Exception("Unimplemented!")
+    if len(strval) != 2 * 20:
+        raise indexerror("length of short_hash representation should be 2 * 20 characters")
+    return short_hash_from_pretty(strval)
 

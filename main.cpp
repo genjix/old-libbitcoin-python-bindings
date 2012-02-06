@@ -636,6 +636,12 @@ bool setup_bdb_blockchain(const std::string& prefix)
     return bc::bdb_blockchain::setup(prefix);
 }
 
+std::string pretty_input_point(const bc::message::input_point& inpoint)
+{
+    return bc::pretty_hex(inpoint.hash) + ":" +
+        boost::lexical_cast<std::string>(inpoint.index);
+}
+
 BOOST_PYTHON_MODULE(_bitcoin)
 {
     using namespace boost::python;
@@ -649,12 +655,13 @@ BOOST_PYTHON_MODULE(_bitcoin)
             .add_property("raw", raw_list<bc::data_chunk>, set_raw_data_chunk)
         ;
     extend_vector<bc::data_chunk>(data_chunk_class);
-    def("hash_from_pretty", bc::hash_from_pretty);
+    def("hash_digest_from_pretty", bc::hash_from_pretty<bc::hash_digest>);
     auto hash_digest_class =
         class_<bc::hash_digest>("_hash_digest")
             .def("__nonzero__", hash_digest_nonzero)
         ;
     extend_hash<bc::hash_digest>(hash_digest_class);
+    def("short_hash_from_pretty", bc::hash_from_pretty<bc::short_hash>);
     auto short_hash_class =
         class_<bc::short_hash>("short_hash_wrapper")
             .def("__nonzero__", short_hash_nonzero)
@@ -762,8 +769,13 @@ BOOST_PYTHON_MODULE(_bitcoin)
     class_<bc::message::input_point>("input_point")
         .def_readwrite("hash", &bc::message::input_point::hash)
         .def_readwrite("index", &bc::message::input_point::index)
+        .def("__repr__", pretty_input_point)
     ;
     // output_point defined in python wrapper
+    auto output_point_list_class =
+        class_<bc::message::output_point_list>("output_point_list")
+        ;
+    extend_vector<bc::message::output_point_list>(output_point_list_class);
     class_<bc::message::transaction_input>("transaction_input")
         .def_readwrite("previous_output",
             &bc::message::transaction_input::previous_output)
