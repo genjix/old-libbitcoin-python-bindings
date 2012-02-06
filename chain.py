@@ -132,4 +132,8 @@ print bitcoin.hash_block_header(schain.block_by_depth(0))
 addr = bitcoin.short_hash("12ab8dc588ca9d5787dde7eb29569da63c3a238c")
 for out in schain.outputs(addr):
     print out
+out = bitcoin.output_point()
+out.hash = bitcoin.hash_digest("6f7cf9580f1c2dfb3c4d5d043cdbb128c640e3f20161245aa7372e9666168516")
+out.index = 0
+print schain.spend(out)
 
