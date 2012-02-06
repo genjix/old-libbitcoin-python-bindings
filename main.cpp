@@ -443,7 +443,15 @@ public:
     {
         return ex_->save(pkt);
     }
+    bc::data_chunk save_address(const bc::message::address& pkt) const
+    {
+        return ex_->save(pkt);
+    }
     bc::data_chunk save_get_address(const bc::message::get_address& pkt) const
+    {
+        return ex_->save(pkt);
+    }
+    bc::data_chunk save_inventory(const bc::message::inventory& pkt) const
     {
         return ex_->save(pkt);
     }
@@ -468,6 +476,44 @@ public:
     {
         return ex_->load_header(stream);
     }
+    bc::message::version load_version(const bc::data_chunk& stream) const
+    {
+        return ex_->load_version(stream);
+    }
+    bc::message::verack load_verack(const bc::data_chunk& stream) const
+    {
+        return ex_->load_verack(stream);
+    }
+    bc::message::address load_address(const bc::data_chunk& stream) const
+    {
+        return ex_->load_address(stream);
+    }
+    bc::message::get_address load_get_address(const bc::data_chunk& stream) const
+    {
+        return ex_->load_get_address(stream);
+    }
+    bc::message::inventory load_inventory(const bc::data_chunk& stream) const
+    {
+        return ex_->load_inventory(stream);
+    }
+    bc::message::get_data load_get_data(const bc::data_chunk& stream) const
+    {
+        return ex_->load_get_data(stream);
+    }
+    bc::message::get_blocks load_get_blocks(const bc::data_chunk& stream) const
+    {
+        return ex_->load_get_blocks(stream);
+    }
+    bc::message::transaction load_transaction(
+        const bc::data_chunk& stream) const
+    {
+        return ex_->load_transaction(stream);
+    }
+    bc::message::block load_block(const bc::data_chunk& stream) const
+    {
+        return ex_->load_block(stream);
+    }
+
     bool verify_header(const bc::message::header& header_msg) const
     {
         return ex_->verify_header(header_msg);
@@ -485,32 +531,6 @@ public:
         const bc::data_chunk& stream) const
     {
         return ex_->verify_checksum(header_msg, stream);
-    }
-
-    bc::message::version load_version(const bc::data_chunk& stream) const
-    {
-        return ex_->load_version(stream);
-    }
-    bc::message::verack load_verack(const bc::data_chunk& stream) const
-    {
-        return ex_->load_verack(stream);
-    }
-    bc::message::address load_address(const bc::data_chunk& stream) const
-    {
-        return ex_->load_address(stream);
-    }
-    bc::message::inventory load_inventory(const bc::data_chunk& stream) const
-    {
-        return ex_->load_inventory(stream);
-    }
-    bc::message::transaction load_transaction(
-        const bc::data_chunk& stream) const
-    {
-        return ex_->load_transaction(stream);
-    }
-    bc::message::block load_block(const bc::data_chunk& stream) const
-    {
-        return ex_->load_block(stream);
     }
 private:
     bc::exporter_ptr ex_;
@@ -594,6 +614,10 @@ BOOST_PYTHON_MODULE(_bitcoin)
     def("generate_sha256_hash", bc::generate_sha256_hash);
     def("generate_sha256_checksum", bc::generate_sha256_checksum);
     // messages.hpp
+    auto block_locator_class =
+        class_<bc::message::block_locator>("block_locator")
+        ;
+    extend_vector<bc::message::block_locator>(block_locator_class);
     class_<bc::message::network_address>("network_address")
         .def_readwrite("timestamp", &bc::message::network_address::timestamp)
         .def_readwrite("service", &bc::message::network_address::services)
@@ -825,22 +849,27 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("save_header", &exporter_wrapper::save_header)
         .def("save_version", &exporter_wrapper::save_version)
         .def("save_verack", &exporter_wrapper::save_verack)
+        .def("save_address", &exporter_wrapper::save_address)
         .def("save_get_address", &exporter_wrapper::save_get_address)
+        .def("save_inventory", &exporter_wrapper::save_inventory)
         .def("save_get_data", &exporter_wrapper::save_get_data)
         .def("save_get_blocks", &exporter_wrapper::save_get_blocks)
         .def("save_block", &exporter_wrapper::save_block)
         .def("save_transaction", &exporter_wrapper::save_transaction)
+        .def("load_version", &exporter_wrapper::load_version)
+        .def("load_verack", &exporter_wrapper::load_verack)
+        .def("load_address", &exporter_wrapper::load_address)
+        .def("load_get_address", &exporter_wrapper::load_get_address)
+        .def("load_inventory", &exporter_wrapper::load_inventory)
+        .def("load_get_data", &exporter_wrapper::load_get_data)
+        .def("load_get_blocks", &exporter_wrapper::load_get_blocks)
+        .def("load_transaction", &exporter_wrapper::load_transaction)
+        .def("load_block", &exporter_wrapper::load_block)
         .def("load_header", &exporter_wrapper::load_header)
         .def("verify_header", &exporter_wrapper::verify_header)
         .def("is_checksum_used", &exporter_wrapper::is_checksum_used)
         .def("load_checksum", &exporter_wrapper::load_checksum)
         .def("verify_checksum", &exporter_wrapper::verify_checksum)
-        .def("load_version", &exporter_wrapper::load_version)
-        .def("load_verack", &exporter_wrapper::load_verack)
-        .def("load_address", &exporter_wrapper::load_address)
-        .def("load_inventory", &exporter_wrapper::load_inventory)
-        .def("load_transaction", &exporter_wrapper::load_transaction)
-        .def("load_block", &exporter_wrapper::load_block)
     ;
     // utility/elliptic_curve_key.hpp
     class_<bc::elliptic_curve_key>("elliptic_curve_key")
