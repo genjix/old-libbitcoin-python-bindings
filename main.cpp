@@ -463,11 +463,15 @@ public:
     {
         return ex_->save(pkt);
     }
+    bc::data_chunk save_transaction(const bc::message::transaction& pkt) const
+    {
+        return ex_->save(pkt);
+    }
     bc::data_chunk save_block(const bc::message::block& pkt) const
     {
         return ex_->save(pkt);
     }
-    bc::data_chunk save_transaction(const bc::message::transaction& pkt) const
+    bc::data_chunk save_ping(const bc::message::ping& pkt) const
     {
         return ex_->save(pkt);
     }
@@ -512,6 +516,10 @@ public:
     bc::message::block load_block(const bc::data_chunk& stream) const
     {
         return ex_->load_block(stream);
+    }
+    bc::message::ping load_ping(const bc::data_chunk& stream) const
+    {
+        return ex_->load_ping(stream);
     }
 
     bool verify_header(const bc::message::header& header_msg) const
@@ -726,6 +734,8 @@ BOOST_PYTHON_MODULE(_bitcoin)
     class_<bc::message::inventory>("inventory")
         .def_readwrite("inventories", &bc::message::inventory::inventories)
     ;
+    class_<bc::message::ping>("ping")
+    ;
     // script.hpp
     enum_<bc::opcode>("opcode")
         .value("raw_data", bc::opcode::raw_data)
@@ -854,8 +864,10 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("save_inventory", &exporter_wrapper::save_inventory)
         .def("save_get_data", &exporter_wrapper::save_get_data)
         .def("save_get_blocks", &exporter_wrapper::save_get_blocks)
-        .def("save_block", &exporter_wrapper::save_block)
         .def("save_transaction", &exporter_wrapper::save_transaction)
+        .def("save_block", &exporter_wrapper::save_block)
+        .def("save_ping", &exporter_wrapper::save_ping)
+        .def("load_header", &exporter_wrapper::load_header)
         .def("load_version", &exporter_wrapper::load_version)
         .def("load_verack", &exporter_wrapper::load_verack)
         .def("load_address", &exporter_wrapper::load_address)
@@ -865,7 +877,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("load_get_blocks", &exporter_wrapper::load_get_blocks)
         .def("load_transaction", &exporter_wrapper::load_transaction)
         .def("load_block", &exporter_wrapper::load_block)
-        .def("load_header", &exporter_wrapper::load_header)
+        .def("load_ping", &exporter_wrapper::load_ping)
         .def("verify_header", &exporter_wrapper::verify_header)
         .def("is_checksum_used", &exporter_wrapper::is_checksum_used)
         .def("load_checksum", &exporter_wrapper::load_checksum)
