@@ -2,6 +2,7 @@
 namespace python = boost::python;
 
 #include <bitcoin/bitcoin.hpp>
+#include <bitcoin/blockchain/bdb_blockchain.hpp>
 namespace ph = std::placeholders;
 
 void initialize_python()
@@ -549,6 +550,92 @@ exporter_wrapper create_satoshi_exporter()
     return exporter_wrapper(std::make_shared<bc::satoshi_exporter>());
 }
 
+class blockchain_wrapper
+{
+public:
+    blockchain_wrapper(bc::blockchain_ptr chain)
+      : chain_(chain)
+    {
+    }
+
+    void store(const bc::message::block& blk, python::object handle_store)
+    {
+        chain_->store(blk,
+            pyfunction<const std::error_code&, bc::block_info>(handle_store));
+    }
+
+    void fetch_block_by_depth(size_t depth, python::object handle_fetch)
+    {
+        chain_->fetch_block(depth,
+            pyfunction<const std::error_code&,
+                const bc::message::block&>(handle_fetch));
+    }
+    void fetch_block_by_hash(const bc::hash_digest& block_hash,
+        python::object handle_fetch)
+    {
+        chain_->fetch_block(block_hash,
+            pyfunction<const std::error_code&,
+                const bc::message::block&>(handle_fetch));
+    }
+    void fetch_block_depth(const bc::hash_digest& block_hash,
+        python::object handle_fetch)
+    {
+        chain_->fetch_block_depth(block_hash,
+            pyfunction<const std::error_code&, size_t>(handle_fetch));
+    }
+    void fetch_last_depth(python::object handle_fetch)
+    {
+        chain_->fetch_last_depth(
+            pyfunction<const std::error_code&, size_t>(handle_fetch));
+    }
+    void fetch_block_locator(python::object handle_fetch)
+    {
+        chain_->fetch_block_locator(
+            pyfunction<const std::error_code&,
+                const bc::message::block_locator&>(handle_fetch));
+    }
+    void fetch_transaction(const bc::hash_digest& transaction_hash,
+        python::object handle_fetch)
+    {
+        chain_->fetch_transaction(transaction_hash,
+            pyfunction<const std::error_code&,
+                const bc::message::transaction&>(handle_fetch));
+    }
+    void fetch_transaction_index(
+        const bc::hash_digest& transaction_hash,
+        python::object handle_fetch)
+    {
+        chain_->fetch_transaction_index(transaction_hash,
+            pyfunction<const std::error_code&,
+                size_t, size_t>(handle_fetch));
+    }
+    void fetch_spend(const bc::message::output_point& outpoint,
+        python::object handle_fetch)
+    {
+        chain_->fetch_spend(outpoint,
+            pyfunction<const std::error_code&,
+                const bc::message::input_point&>(handle_fetch));
+    }
+    void fetch_outputs(const bc::short_hash& pubkey_hash,
+        python::object handle_fetch)
+    {
+        chain_->fetch_outputs(pubkey_hash,
+            pyfunction<const std::error_code&,
+                const bc::message::output_point_list&>(handle_fetch));
+    }
+private:
+    bc::blockchain_ptr chain_;
+};
+
+blockchain_wrapper create_bdb_blockchain(const std::string& prefix)
+{
+    return blockchain_wrapper(std::make_shared<bc::bdb_blockchain>(prefix));
+}
+bool setup_bdb_blockchain(const std::string& prefix)
+{
+    return bc::bdb_blockchain::setup(prefix);
+}
+
 BOOST_PYTHON_MODULE(_bitcoin)
 {
     using namespace boost::python;
@@ -803,6 +890,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .value("accept_failed", bc::error::accept_failed)
         .value("bad_stream", bc::error::bad_stream)
         .value("channel_stopped", bc::error::channel_stopped)
+        .value("channel_timeout", bc::error::channel_timeout)
     ;
     class_<std::error_code>("error_code", init<libbitcoin::error>())
         .def("__str__", &std::error_code::message)
@@ -892,6 +980,23 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("set_private_key", &bc::elliptic_curve_key::set_private_key)
         .def("private_key", &bc::elliptic_curve_key::private_key)
         .def("sign", &bc::elliptic_curve_key::sign)
+    ;
+    // blockchain
+    def("bdb_blockchain", create_bdb_blockchain);
+    def("setup_bdb_blockchain", setup_bdb_blockchain);
+    class_<blockchain_wrapper>("blockchain", no_init)
+        .def("store", &blockchain_wrapper::store)
+        .def("fetch_block_by_depth",
+            &blockchain_wrapper::fetch_block_by_depth)
+        .def("fetch_block_by_hash", &blockchain_wrapper::fetch_block_by_hash)
+        .def("fetch_block_depth", &blockchain_wrapper::fetch_block_depth)
+        .def("fetch_last_depth", &blockchain_wrapper::fetch_last_depth)
+        .def("fetch_block_locator", &blockchain_wrapper::fetch_block_locator)
+        .def("fetch_transaction", &blockchain_wrapper::fetch_transaction)
+        .def("fetch_transaction_index",
+            &blockchain_wrapper::fetch_transaction_index)
+        .def("fetch_spend", &blockchain_wrapper::fetch_spend)
+        .def("fetch_outputs", &blockchain_wrapper::fetch_outputs)
     ;
 }
 
