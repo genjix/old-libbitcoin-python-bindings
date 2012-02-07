@@ -5,12 +5,6 @@ namespace python = boost::python;
 #include <bitcoin/blockchain/bdb_blockchain.hpp>
 namespace ph = std::placeholders;
 
-void initialize_python()
-{
-    PyEval_InitThreads();
-    PyEval_ReleaseLock();
-}
-
 class ensure_gil
 {
 public:
@@ -38,7 +32,15 @@ public:
     void operator()(Args... params)
     {
         ensure_gil eg;
-        callable_(std::forward<Args>(params)...);
+        try
+        {
+            callable_(std::forward<Args>(params)...);
+        }
+        catch (const python::error_already_set&)
+        {
+            PyErr_Print();
+            python::handle_exception();
+        }
     }
 private:
     python::object callable_;
@@ -258,13 +260,29 @@ private:
         bc::acceptor_ptr accept, python::object handle_listen)
     {
         ensure_gil eg;
-        handle_listen(ec, acceptor_wrapper(accept));
+        try
+        {
+            handle_listen(ec, acceptor_wrapper(accept));
+        }
+        catch (const python::error_already_set&)
+        {
+            PyErr_Print();
+            python::handle_exception();
+        }
     }
     static void post_connect(const std::error_code& ec,
         bc::channel_ptr node, python::object handle_connect)
     {
         ensure_gil eg;
-        handle_connect(ec, channel_wrapper(node));
+        try
+        {
+            handle_connect(ec, channel_wrapper(node));
+        }
+        catch (const python::error_already_set&)
+        {
+            PyErr_Print();
+            python::handle_exception();
+        }
     }
     bc::network_ptr net_;
 };
@@ -316,7 +334,15 @@ private:
         bc::channel_ptr node, python::object handle_connect)
     {
         ensure_gil eg;
-        handle_connect(ec, channel_wrapper(node));
+        try
+        {
+            handle_connect(ec, channel_wrapper(node));
+        }
+        catch (const python::error_already_set&)
+        {
+            PyErr_Print();
+            python::handle_exception();
+        }
     }
     bc::handshake_ptr hs_;
 };
@@ -644,8 +670,10 @@ std::string pretty_input_point(const bc::message::input_point& inpoint)
 
 BOOST_PYTHON_MODULE(_bitcoin)
 {
+    PyEval_InitThreads();
+    //PyEval_ReleaseLock();
+
     using namespace boost::python;
-    def("initialize_python", initialize_python);
     // types.hpp
     def("bytes_from_pretty", bc::bytes_from_pretty);
     auto data_chunk_class =

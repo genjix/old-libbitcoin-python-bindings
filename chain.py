@@ -79,11 +79,11 @@ class sync_blockchain:
         self.stall()
         return self.fetched_item
 
-    def handle_fetch_transaction(self, ec, transaction):
+    def handle_fetch_transaction(self, ec, tx):
         if ec:
             self.fetched_item = ec
         else:
-            self.fetched_item = transaction
+            self.fetched_item = tx
 
     def transaction_index(self, tx_hash):
         self.fetched_item = None
@@ -92,7 +92,7 @@ class sync_blockchain:
         self.stall()
         return self.fetched_item
 
-    def handle_fetch_transaction(self, ec, block_depth, index_in_block):
+    def handle_fetch_transaction_index(self, ec, block_depth, index_in_block):
         if ec:
             self.fetched_item = ec
         else:
@@ -122,18 +122,19 @@ class sync_blockchain:
         else:
             self.fetched_item = outputs
 
-def foo(ec, outs):
-    print ec, outs
+if __name__ == '__main__':
+    def foo(ec, outs):
+        print ec, outs
 
-bdb_chain = bitcoin.bdb_blockchain("/home/genjix/libbitcoin/database")
-schain = sync_blockchain(bdb_chain)
-print schain.last_depth()
-print bitcoin.hash_block_header(schain.block_by_depth(0))
-addr = bitcoin.short_hash("12ab8dc588ca9d5787dde7eb29569da63c3a238c")
-for out in schain.outputs(addr):
-    print out
-out = bitcoin.output_point()
-out.hash = bitcoin.hash_digest("6f7cf9580f1c2dfb3c4d5d043cdbb128c640e3f20161245aa7372e9666168516")
-out.index = 0
-print schain.spend(out)
+    bdb_chain = bitcoin.bdb_blockchain("/home/genjix/libbitcoin/database")
+    schain = sync_blockchain(bdb_chain)
+    print schain.last_depth()
+    print bitcoin.hash_block_header(schain.block_by_depth(0))
+    addr = bitcoin.short_hash("12ab8dc588ca9d5787dde7eb29569da63c3a238c")
+    for out in schain.outputs(addr):
+        print out
+    out = bitcoin.output_point()
+    out.hash = bitcoin.hash_digest("6f7cf9580f1c2dfb3c4d5d043cdbb128c640e3f20161245aa7372e9666168516")
+    out.index = 0
+    print schain.spend(out)
 

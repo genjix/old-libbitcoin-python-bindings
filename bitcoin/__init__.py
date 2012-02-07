@@ -1,5 +1,4 @@
 from _bitcoin import *
-initialize_python()
 from bind import bind, _1, _2, _3
 
 class output_point(input_point):
