@@ -934,7 +934,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
     ;
     class_<std::error_code>("error_code", init<libbitcoin::error>())
         .def("__str__", &std::error_code::message)
-        .def("__reor__", &std::error_code::message)
+        .def("__repr__", &std::error_code::message)
         .def("__nonzero__", &error_code_wrapper::nonzero)
         .def("__eq__", &error_code_wrapper::eq)
     ;
