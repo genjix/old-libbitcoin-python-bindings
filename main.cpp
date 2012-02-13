@@ -260,29 +260,17 @@ private:
         bc::acceptor_ptr accept, python::object handle_listen)
     {
         ensure_gil eg;
-        try
-        {
-            handle_listen(ec, acceptor_wrapper(accept));
-        }
-        catch (const python::error_already_set&)
-        {
-            PyErr_Print();
-            python::handle_exception();
-        }
+        pyfunction<const std::error_code&,
+            acceptor_wrapper> f(handle_listen);
+        f(ec, acceptor_wrapper(accept));
     }
     static void post_connect(const std::error_code& ec,
         bc::channel_ptr node, python::object handle_connect)
     {
         ensure_gil eg;
-        try
-        {
-            handle_connect(ec, channel_wrapper(node));
-        }
-        catch (const python::error_already_set&)
-        {
-            PyErr_Print();
-            python::handle_exception();
-        }
+        pyfunction<const std::error_code&,
+            channel_wrapper> f(handle_connect);
+        f(ec, channel_wrapper(node));
     }
     bc::network_ptr net_;
 };
@@ -334,15 +322,9 @@ private:
         bc::channel_ptr node, python::object handle_connect)
     {
         ensure_gil eg;
-        try
-        {
-            handle_connect(ec, channel_wrapper(node));
-        }
-        catch (const python::error_already_set&)
-        {
-            PyErr_Print();
-            python::handle_exception();
-        }
+        pyfunction<const std::error_code&,
+            channel_wrapper> f(handle_connect);
+        f(ec, channel_wrapper(node));
     }
     bc::handshake_ptr hs_;
 };
@@ -649,7 +631,30 @@ public:
             pyfunction<const std::error_code&,
                 const bc::message::output_point_list&>(handle_fetch));
     }
+
+    void subscribe_reorganize(python::object handle_reorganize)
+    {
+        chain_->subscribe_reorganize(
+            std::bind(&blockchain_wrapper::call_handle_reorganize,
+                ph::_1, ph::_2, ph::_3, handle_reorganize));
+    }
 private:
+    static void call_handle_reorganize(const std::error_code& ec,
+        const bc::blockchain::block_list& arrivals,
+        const bc::blockchain::block_list& replaced,
+        python::object handle_reorganize)
+    {
+        python::list py_arrivals, py_replaced;
+        for (auto blk: arrivals)
+            py_arrivals.append(*blk);
+        for (auto blk: replaced)
+            py_replaced.append(*blk);
+        ensure_gil eg;
+        pyfunction<const std::error_code&, python::list, python::list>
+            f(handle_reorganize);
+        f(ec, py_arrivals, py_replaced);
+    }
+
     bc::blockchain_ptr chain_;
 };
 
@@ -1037,6 +1042,8 @@ BOOST_PYTHON_MODULE(_bitcoin)
             &blockchain_wrapper::fetch_transaction_index)
         .def("fetch_spend", &blockchain_wrapper::fetch_spend)
         .def("fetch_outputs", &blockchain_wrapper::fetch_outputs)
+        .def("subscribe_reorganize",
+            &blockchain_wrapper::subscribe_reorganize)
     ;
 }
 
