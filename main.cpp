@@ -282,6 +282,11 @@ public:
     {
         hs_ = std::make_shared<bc::handshake>();
     }
+    void start(python::object handle_start)
+    {
+        hs_->start(
+            pyfunction<const std::error_code&>(handle_start));
+    }
     void connect(network_wrapper net_wrap, const std::string& hostname,
         uint16_t port, python::object handle_connect)
     {
@@ -289,9 +294,9 @@ public:
             std::bind(&handshake_wrapper::post_connect,
                 ph::_1, ph::_2, handle_connect));
     }
-    void start(channel_wrapper node, python::object handle_handshake)
+    void ready(channel_wrapper node, python::object handle_handshake)
     {
-        hs_->start(node.channel(),
+        hs_->ready(node.channel(),
             pyfunction<const std::error_code&>(handle_handshake));
     }
     void discover_external_ip(python::object handle_discover)
@@ -979,8 +984,9 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("connect", &network_wrapper::connect)
     ;
     class_<handshake_wrapper>("handshake")
-        .def("connect", &handshake_wrapper::connect)
         .def("start", &handshake_wrapper::start)
+        .def("connect", &handshake_wrapper::connect)
+        .def("ready", &handshake_wrapper::ready)
         .def("discover_external_ip", &handshake_wrapper::discover_external_ip)
         .def("fetch_network_address", &handshake_wrapper::fetch_network_address)
         .def("set_port", &handshake_wrapper::set_port)
