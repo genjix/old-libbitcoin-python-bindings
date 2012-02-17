@@ -721,6 +721,10 @@ BOOST_PYTHON_MODULE(_bitcoin)
     def("block_value", bc::block_value);
     def("block_work", bc::block_work);
     def("hash_block_header", bc::hash_block_header);
+    auto indices_list_class =
+        class_<bc::indices_list>("indices_list")
+        ;
+    extend_vector<bc::indices_list>(indices_list_class);
     def("block_locator_indices", bc::block_locator_indices);
     def("genesis_block", bc::genesis_block);
     // constants.hpp
