@@ -14,6 +14,9 @@ def receive_inv(ec, inv, node):
             print ivv.hash
         else:
             print "--"
+    # Re-subscribe to receive further inventory packets.
+    # Bitcoin nodes can respond with any number of hashes split over
+    # any number of batches.
     node.subscribe_inventory(
         bitcoin.bind(receive_inv, bitcoin._1, bitcoin._2, node))
 
@@ -35,15 +38,19 @@ def show_ip(ec, addr):
 def handle_handshake(ec, node, hs):
     if ec:
         error_exit(ec)
-    node.subscribe_inventory(
-        bitcoin.bind(receive_inv, bitcoin._1, bitcoin._2, node))
+    # 1. Connected to other node
+    # 2. Performed version/verack handshake process
+    # Node is now ready and communicating with us
     node.send_get_blocks(create_get_blocks_message(),
          bitcoin.bind(handle_send_get_blocks, bitcoin._1))
+    node.subscribe_inventory(
+        bitcoin.bind(receive_inv, bitcoin._1, bitcoin._2, node))
     hs.fetch_network_address(show_ip)
 
 def handle_init(ec, hs, net):
     if ec:
         error_exit(ec)
+    # Main program thread begins here
     hs.connect(net, "localhost", 8333,
         bitcoin.bind(handle_handshake, bitcoin._1, bitcoin._2, hs))
 
