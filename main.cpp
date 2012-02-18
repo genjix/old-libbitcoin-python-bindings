@@ -123,6 +123,27 @@ public:
     }
 };
 
+class atomic_counter_wrapper
+{
+public:
+    atomic_counter_wrapper(size_t initial_value)
+    {
+        counter_ = std::make_shared<bc::atomic_counter>(initial_value);
+    }
+
+    void increment()
+    {
+        ++(*counter_);
+    }
+
+    size_t count() const
+    {
+        return *counter_;
+    }
+private:
+    bc::atomic_counter_ptr counter_;
+};
+
 class acceptor_wrapper
 {
 public:
@@ -705,6 +726,10 @@ BOOST_PYTHON_MODULE(_bitcoin)
             .def("__nonzero__", short_hash_nonzero)
         ;
     extend_hash<bc::short_hash>(short_hash_class);
+    class_<atomic_counter_wrapper>("atomic_counter", init<size_t>())
+        .def("increment", &atomic_counter_wrapper::increment)
+        .def("count", &atomic_counter_wrapper::count)
+    ;
     // address.hpp
     def("public_key_to_address", bc::public_key_to_address);
     def("address_to_short_hash", bc::address_to_short_hash);
