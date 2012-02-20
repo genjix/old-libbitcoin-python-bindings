@@ -561,20 +561,6 @@ public:
     {
         return ex_->verify_header(header_msg);
     }
-
-    bool is_checksum_used(const bc::message::header& header_msg) const
-    {
-        return ex_->is_checksum_used(header_msg);
-    }
-    uint32_t load_checksum(const bc::data_chunk& stream) const
-    {
-        return ex_->load_checksum(stream);
-    }
-    bool verify_checksum(const bc::message::header& header_msg,
-        const bc::data_chunk& stream) const
-    {
-        return ex_->verify_checksum(header_msg, stream);
-    }
 private:
     bc::exporter_ptr ex_;
 };
@@ -1047,9 +1033,6 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("load_block", &exporter_wrapper::load_block)
         .def("load_ping", &exporter_wrapper::load_ping)
         .def("verify_header", &exporter_wrapper::verify_header)
-        .def("is_checksum_used", &exporter_wrapper::is_checksum_used)
-        .def("load_checksum", &exporter_wrapper::load_checksum)
-        .def("verify_checksum", &exporter_wrapper::verify_checksum)
     ;
     // utility/elliptic_curve_key.hpp
     class_<bc::elliptic_curve_key>("elliptic_curve_key")
