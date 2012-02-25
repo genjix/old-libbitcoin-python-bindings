@@ -178,6 +178,10 @@ public:
     {
         node_->stop();
     }
+    bool stopped() const
+    {
+        return node_->stopped();
+    }
 
     template <typename Message>
     void send(const Message& packet, python::object handle_send)
@@ -969,6 +973,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
     ;
     class_<channel_wrapper>("channel", no_init)
         .def("stop", &channel_wrapper::stop)
+        .def("stopped", &channel_wrapper::stopped)
         .def("send_version", &channel_wrapper::send<bc::message::version>)
         .def("send_verack", &channel_wrapper::send<bc::message::verack>)
         .def("send_address", &channel_wrapper::send<bc::message::address>)
