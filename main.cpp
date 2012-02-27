@@ -144,6 +144,27 @@ private:
     bc::atomic_counter_ptr counter_;
 };
 
+struct async_service_wrapper
+{
+    async_service_wrapper()
+    {
+        s = std::make_shared<bc::async_service>();
+    }
+    async_service_wrapper(size_t n)
+    {
+        s = std::make_shared<bc::async_service>(n);
+    }
+    void spawn()
+    {
+        s->spawn();
+    }
+    void shutdown()
+    {
+        s->shutdown();
+    }
+    std::shared_ptr<bc::async_service> s;
+};
+
 class acceptor_wrapper
 {
 public:
@@ -258,9 +279,9 @@ private:
 class network_wrapper
 {
 public:
-    network_wrapper()
+    network_wrapper(async_service_wrapper service)
     {
-        net_ = std::make_shared<bc::network>();
+        net_ = std::make_shared<bc::network>(*service.s);
     }
     void listen(uint16_t port, python::object handle_listen)
     {
@@ -303,9 +324,9 @@ private:
 class handshake_wrapper
 {
 public:
-    handshake_wrapper()
+    handshake_wrapper(async_service_wrapper service)
     {
-        hs_ = std::make_shared<bc::handshake>();
+        hs_ = std::make_shared<bc::handshake>(*service.s);
     }
     void start(python::object handle_start)
     {
@@ -674,9 +695,11 @@ private:
     bc::blockchain_ptr chain_;
 };
 
-blockchain_wrapper create_bdb_blockchain(const std::string& prefix)
+blockchain_wrapper create_bdb_blockchain(async_service_wrapper service,
+    const std::string& prefix)
 {
-    return blockchain_wrapper(std::make_shared<bc::bdb_blockchain>(prefix));
+    return blockchain_wrapper(
+        std::make_shared<bc::bdb_blockchain>(*service.s, prefix));
 }
 bool setup_bdb_blockchain(const std::string& prefix)
 {
@@ -999,11 +1022,11 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("subscribe_block", &channel_wrapper::subscribe_block)
         .def("subscribe_raw", &channel_wrapper::subscribe_raw)
     ;
-    class_<network_wrapper>("network")
+    class_<network_wrapper>("network", init<async_service_wrapper>())
         .def("listen", &network_wrapper::listen)
         .def("connect", &network_wrapper::connect)
     ;
-    class_<handshake_wrapper>("handshake")
+    class_<handshake_wrapper>("handshake", init<async_service_wrapper>())
         .def("start", &handshake_wrapper::start)
         .def("connect", &handshake_wrapper::connect)
         .def("ready", &handshake_wrapper::ready)
@@ -1067,6 +1090,12 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("fetch_outputs", &blockchain_wrapper::fetch_outputs)
         .def("subscribe_reorganize",
             &blockchain_wrapper::subscribe_reorganize)
+    ;
+    // async_service
+    class_<async_service_wrapper>("async_service")
+        .def(init<size_t>())
+        .def("spawn", &async_service_wrapper::spawn)
+        .def("shutdown", &async_service_wrapper::shutdown)
     ;
 }
 

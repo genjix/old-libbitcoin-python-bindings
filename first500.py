@@ -55,8 +55,9 @@ def handle_init(ec, hs, net):
         bitcoin.bind(handle_handshake, bitcoin._1, bitcoin._2, hs))
 
 if __name__ == "__main__":
-    net = bitcoin.network()
-    hs = bitcoin.handshake()
+    s = bitcoin.async_service(1)
+    net = bitcoin.network(s)
+    hs = bitcoin.handshake(s)
     hs.start(bitcoin.bind(handle_init, bitcoin._1, hs, net))
     raw_input()
 

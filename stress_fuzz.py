@@ -5,7 +5,8 @@ import fuzzed
 class App:
 
     def __init__(self):
-        self.bdb_chain = bitcoin.bdb_blockchain("database")
+        self.service = bitcoin.async_service(1)
+        self.bdb_chain = bitcoin.bdb_blockchain(self.service, "database")
         self.chain = chain.sync_blockchain(self.bdb_chain)
 
     def show_chains(self):
