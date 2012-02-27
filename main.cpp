@@ -675,6 +675,11 @@ public:
             std::bind(&blockchain_wrapper::call_handle_reorganize,
                 ph::_1, ph::_2, ph::_3, handle_reorganize));
     }
+
+    bc::blockchain_ptr chain()
+    {
+        return chain_;
+    }
 private:
     static void call_handle_reorganize(const std::error_code& ec,
         const bc::blockchain::block_list& arrivals,
@@ -711,6 +716,21 @@ std::string pretty_input_point(const bc::message::input_point& inpoint)
     return bc::pretty_hex(inpoint.hash) + ":" +
         boost::lexical_cast<std::string>(inpoint.index);
 }
+
+class poller_wrapper
+{
+public:
+    poller_wrapper(blockchain_wrapper chain)
+    {
+        poll_ = std::make_shared<bc::poller>(chain.chain());
+    }
+    void query(channel_wrapper node)
+    {
+        poll_->query(node.channel());
+    }
+private:
+    bc::poller_ptr poll_;
+};
 
 BOOST_PYTHON_MODULE(_bitcoin)
 {
@@ -1096,6 +1116,10 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def(init<size_t>())
         .def("spawn", &async_service_wrapper::spawn)
         .def("shutdown", &async_service_wrapper::shutdown)
+    ;
+    // poller
+    class_<poller_wrapper>("poller", init<blockchain_wrapper>())
+        .def("query", &poller_wrapper::query)
     ;
 }
 
