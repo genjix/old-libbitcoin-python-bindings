@@ -368,6 +368,11 @@ public:
         hs_->set_user_agent(user_agent,
             pyfunction<const std::error_code&>(handle_set));
     }
+
+    bc::handshake_ptr hs()
+    {
+        return hs_;
+    }
 private:
     static void post_connect(const std::error_code& ec,
         bc::channel_ptr node, python::object handle_connect)
@@ -378,6 +383,110 @@ private:
         f(ec, channel_wrapper(node));
     }
     bc::handshake_ptr hs_;
+};
+
+class hosts_wrapper
+{
+public:
+    hosts_wrapper(async_service_wrapper service)
+    {
+        hosts_ = std::make_shared<bc::hosts>(*service.s);
+    }
+
+    void load(const std::string& filename, python::object handle_load)
+    {
+        hosts_->load(filename, pyfunction<const std::error_code&>(handle_load));
+    }
+    void save(const std::string& filename, python::object handle_save)
+    {
+        hosts_->save(filename, pyfunction<const std::error_code&>(handle_save));
+    }
+
+    void store(const bc::message::network_address& address,
+        python::object handle_store)
+    {
+        hosts_->store(address,
+            pyfunction<const std::error_code&>(handle_store));
+    }
+    void remove(const bc::message::network_address& address,
+        python::object handle_remove)
+    {
+        hosts_->store(address,
+            pyfunction<const std::error_code&>(handle_remove));
+    }
+
+    void fetch_address(python::object handle_fetch)
+    {
+        hosts_->fetch_address(
+            pyfunction<const std::error_code&,
+                const bc::message::network_address&>(handle_fetch));
+    }
+
+    void fetch_count(python::object handle_fetch)
+    {
+        hosts_->fetch_count(
+            pyfunction<const std::error_code&, size_t>(handle_fetch));
+    }
+
+    bc::hosts_ptr hsts()
+    {
+        return hosts_;
+    }
+private:
+    bc::hosts_ptr hosts_;
+};
+
+class protocol_wrapper
+{
+public:
+    protocol_wrapper(async_service_wrapper service,
+        hosts_wrapper h, handshake_wrapper hs, network_wrapper n)
+    {
+        protocol_ = std::make_shared<bc::protocol>(*service.s,
+            h.hsts(), hs.hs(), n.net());
+    }
+
+    void start(python::object handle_complete)
+    {
+        protocol_->start(
+            pyfunction<const std::error_code&>(handle_complete));
+    }
+    void stop(python::object handle_complete)
+    {
+        protocol_->stop(
+            pyfunction<const std::error_code&>(handle_complete));
+    }
+
+    void bootstrap(python::object handle_complete)
+    {
+        protocol_->bootstrap(
+            pyfunction<const std::error_code&>(handle_complete));
+    }
+    void run()
+    {
+        protocol_->run();
+    }
+
+    void fetch_connection_count(python::object handle_fetch)
+    {
+        protocol_->fetch_connection_count(
+            pyfunction<const std::error_code&, size_t>(handle_fetch));
+    }
+    void subscribe_channel(python::object handle_channel)
+    {
+        protocol_->subscribe_channel(
+            std::bind(&protocol_wrapper::post_new_channel,
+                ph::_1, handle_channel));
+    }
+private:
+    static void post_new_channel(bc::channel_ptr node,
+        python::object handle_channel)
+    {
+        ensure_gil eg;
+        pyfunction<channel_wrapper> f(handle_channel);
+        f(channel_wrapper(node));
+    }
+    bc::protocol_ptr protocol_;
 };
 
 template <typename ListType>
@@ -1055,6 +1164,27 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("fetch_network_address", &handshake_wrapper::fetch_network_address)
         .def("set_port", &handshake_wrapper::set_port)
         .def("set_user_agent", &handshake_wrapper::set_user_agent)
+    ;
+    // hosts
+    class_<hosts_wrapper>("hosts", init<async_service_wrapper>())
+        .def("load", &hosts_wrapper::load)
+        .def("save", &hosts_wrapper::save)
+        .def("store", &hosts_wrapper::store)
+        .def("remove", &hosts_wrapper::remove)
+        .def("fetch_address", &hosts_wrapper::fetch_address)
+        .def("fetch_count", &hosts_wrapper::fetch_count)
+    ;
+    // protocol
+    class_<protocol_wrapper>("protocol",
+        init<async_service_wrapper, hosts_wrapper,
+            handshake_wrapper, network_wrapper>())
+        .def("start", &protocol_wrapper::start)
+        .def("stop", &protocol_wrapper::stop)
+        .def("bootstrap", &protocol_wrapper::bootstrap)
+        .def("run", &protocol_wrapper::run)
+        .def("fetch_connection_count",
+            &protocol_wrapper::fetch_connection_count)
+        .def("subscribe_channel", &protocol_wrapper::subscribe_channel)
     ;
     // exporter.hpp
     def("satoshi_exporter", create_satoshi_exporter);
