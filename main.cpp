@@ -673,7 +673,7 @@ public:
     {
         chain_->subscribe_reorganize(
             std::bind(&blockchain_wrapper::call_handle_reorganize,
-                ph::_1, ph::_2, ph::_3, handle_reorganize));
+                ph::_1, ph::_2, ph::_3, ph::_4, handle_reorganize));
     }
 
     bc::blockchain_ptr chain()
@@ -682,6 +682,7 @@ public:
     }
 private:
     static void call_handle_reorganize(const std::error_code& ec,
+        size_t fork_point,
         const bc::blockchain::block_list& arrivals,
         const bc::blockchain::block_list& replaced,
         python::object handle_reorganize)
@@ -692,9 +693,9 @@ private:
         for (auto blk: replaced)
             py_replaced.append(*blk);
         ensure_gil eg;
-        pyfunction<const std::error_code&, python::list, python::list>
+        pyfunction<const std::error_code&, size_t, python::list, python::list>
             f(handle_reorganize);
-        f(ec, py_arrivals, py_replaced);
+        f(ec, fork_point, py_arrivals, py_replaced);
     }
 
     bc::blockchain_ptr chain_;
@@ -856,7 +857,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def_readwrite("address_you", &bc::message::version::address_you)
         .def_readwrite("nonce", &bc::message::version::nonce)
         .def_readwrite("user_agent", &bc::message::version::user_agent)
-        .def_readwrite("start_height", &bc::message::version::start_height)
+        .def_readwrite("start_depth", &bc::message::version::start_depth)
     ;
     class_<bc::message::verack>("verack")
     ;
