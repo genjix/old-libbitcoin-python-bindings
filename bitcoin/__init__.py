@@ -1,6 +1,9 @@
 from _bitcoin import *
 from bind import bind, _1, _2, _3
 
+# Turn off libbitcoin output
+disable_logging()
+
 class output_point(input_point):
     pass
 

@@ -117,7 +117,7 @@ public:
     {
         return (bool)ec;
     }
-    static bool eq(const std::error_code& eca, libbitcoin::error err)
+    static bool eq(const std::error_code& eca, bc::error::error_code_t err)
     {
         return eca == err;
     }
@@ -814,7 +814,7 @@ blockchain_wrapper create_bdb_blockchain(async_service_wrapper service,
     const std::string& prefix)
 {
     return blockchain_wrapper(
-        std::make_shared<bc::bdb_blockchain>(*service.s, prefix));
+        bc::bdb_blockchain::create(*service.s, prefix));
 }
 bool setup_bdb_blockchain(const std::string& prefix)
 {
@@ -842,12 +842,19 @@ private:
     bc::poller_ptr poll_;
 };
 
+void disable_logging()
+{
+    bc::log_debug().alias(bc::log_level::debug, bc::log_level::null);
+    bc::log_debug().alias(bc::log_level::info, bc::log_level::null);
+}
+
 BOOST_PYTHON_MODULE(_bitcoin)
 {
     PyEval_InitThreads();
     //PyEval_ReleaseLock();
 
     using namespace boost::python;
+    def("disable_logging", disable_logging);
     // types.hpp
     def("bytes_from_pretty", bc::bytes_from_pretty);
     auto data_chunk_class =
@@ -1100,7 +1107,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
     def("parse_script", bc::parse_script);
     def("save_script", bc::save_script);
     // error.hpp
-    enum_<libbitcoin::error>("error")
+    enum_<libbitcoin::error::error_code_t>("error")
         .value("missing_object", bc::error::missing_object)
         .value("object_already_exists", bc::error::object_already_exists)
         .value("unspent_output", bc::error::unspent_output)
@@ -1114,7 +1121,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .value("channel_stopped", bc::error::channel_stopped)
         .value("channel_timeout", bc::error::channel_timeout)
     ;
-    class_<std::error_code>("error_code", init<libbitcoin::error>())
+    class_<std::error_code>("error_code", init<bc::error::error_code_t>())
         .def("__str__", &std::error_code::message)
         .def("__repr__", &std::error_code::message)
         .def("__nonzero__", &error_code_wrapper::nonzero)
@@ -1252,5 +1259,15 @@ BOOST_PYTHON_MODULE(_bitcoin)
     class_<poller_wrapper>("poller", init<blockchain_wrapper>())
         .def("query", &poller_wrapper::query)
     ;
+    // session
+    //class_<session_wrapper>("session", init<
+    //    hosts_wrapper,
+    //    handshake_wrapper,
+    //    network_wrapper,
+    //    protocol_wrapper,
+    //    blockchain_wrapper,
+    //    poller_wrapper,
+    //    transaction_pool_wrapper>())
+    //;
 }
 

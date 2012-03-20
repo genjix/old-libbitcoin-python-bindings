@@ -6,8 +6,8 @@ b.setup_bdb_blockchain("database")
 
 a = stre.App()
 
-def reorganize(ec, arr, repl):
-    print 'Reorganize!', ec
+def reorganize(ec, fork_point, arr, repl):
+    print 'Reorganize!', ec, fork_point
     a.bdb_chain.subscribe_reorganize(reorganize)
     for blk in arr:
         print 'arrive', b.hash_block_header(blk)
