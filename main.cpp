@@ -478,6 +478,11 @@ public:
             std::bind(&protocol_wrapper::post_new_channel,
                 ph::_1, handle_channel));
     }
+
+    bc::protocol_ptr prot()
+    {
+        return protocol_;
+    }
 private:
     static void post_new_channel(bc::channel_ptr node,
         python::object handle_channel)
@@ -838,6 +843,11 @@ public:
     {
         poll_->query(node.channel());
     }
+
+    bc::poller_ptr p()
+    {
+        return poll_;
+    }
 private:
     bc::poller_ptr poll_;
 };
@@ -847,6 +857,75 @@ void disable_logging()
     bc::log_debug().alias(bc::log_level::debug, bc::log_level::null);
     bc::log_debug().alias(bc::log_level::info, bc::log_level::null);
 }
+
+class transaction_pool_wrapper
+{
+public:
+    transaction_pool_wrapper(async_service_wrapper service,
+        blockchain_wrapper b)
+    {
+        pool_ = bc::transaction_pool::create(*service.s, b.chain());
+    }
+
+    bc::transaction_pool_ptr p()
+    {
+        return pool_;
+    }
+
+    void store(const bc::message::transaction& tx,
+        python::object handle_confirm, python::object handle_store)
+    {
+        pool_->store(tx,
+            pyfunction<const std::error_code&>(handle_confirm),
+            pyfunction<const std::error_code&>(handle_store));
+    }
+
+    void exists(const bc::hash_digest& tx_hash,
+        python::object handle_exists)
+    {
+        pool_->exists(tx_hash,
+            pyfunction<bool>(handle_exists));
+    }
+private:
+    bc::transaction_pool_ptr pool_;
+};
+
+class session_wrapper
+{
+public:
+    session_wrapper(
+        hosts_wrapper hsts,
+        handshake_wrapper h,
+        network_wrapper n,
+        protocol_wrapper pp,
+        blockchain_wrapper chain,
+        poller_wrapper pl,
+        transaction_pool_wrapper tp)
+    {
+        bc::session_params p;
+        p.hosts_ = hsts.hsts();
+        p.handshake_ = h.hs();
+        p.network_ = n.net();
+        p.protocol_ = pp.prot();
+        p.poller_ = pl.p();
+        p.blockchain_ = chain.chain();
+        p.transaction_pool_ = tp.p();
+        session_ = std::make_shared<bc::session>(p);
+    }
+
+    void start(python::object handle_complete)
+    {
+        session_->start(
+            pyfunction<const std::error_code&>(handle_complete));
+    }
+    void stop(python::object handle_complete)
+    {
+        session_->stop(
+            pyfunction<const std::error_code&>(handle_complete));
+    }
+private:
+    bc::session_ptr session_;
+};
 
 BOOST_PYTHON_MODULE(_bitcoin)
 {
@@ -1259,15 +1338,23 @@ BOOST_PYTHON_MODULE(_bitcoin)
     class_<poller_wrapper>("poller", init<blockchain_wrapper>())
         .def("query", &poller_wrapper::query)
     ;
+    // transaction_pool
+    class_<transaction_pool_wrapper>("transaction_pool",
+            init<async_service_wrapper, blockchain_wrapper>())
+        .def("store", &transaction_pool_wrapper::store)
+        .def("exists", &transaction_pool_wrapper::exists)
+    ;
     // session
-    //class_<session_wrapper>("session", init<
-    //    hosts_wrapper,
-    //    handshake_wrapper,
-    //    network_wrapper,
-    //    protocol_wrapper,
-    //    blockchain_wrapper,
-    //    poller_wrapper,
-    //    transaction_pool_wrapper>())
-    //;
+    class_<session_wrapper>("session", init<
+        hosts_wrapper,
+        handshake_wrapper,
+        network_wrapper,
+        protocol_wrapper,
+        blockchain_wrapper,
+        poller_wrapper,
+        transaction_pool_wrapper>())
+        .def("start", &session_wrapper::start)
+        .def("stop", &session_wrapper::stop)
+    ;
 }
 
