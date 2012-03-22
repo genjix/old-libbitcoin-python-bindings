@@ -723,18 +723,32 @@ public:
             pyfunction<const std::error_code&, bc::block_info>(handle_store));
     }
 
-    void fetch_block_by_depth(size_t depth, python::object handle_fetch)
+    void fetch_block_header_by_depth(size_t depth, python::object handle_fetch)
     {
-        chain_->fetch_block(depth,
+        chain_->fetch_block_header(depth,
             pyfunction<const std::error_code&,
                 const bc::message::block&>(handle_fetch));
     }
-    void fetch_block_by_hash(const bc::hash_digest& block_hash,
+    void fetch_block_header_by_hash(const bc::hash_digest& block_hash,
         python::object handle_fetch)
     {
-        chain_->fetch_block(block_hash,
+        chain_->fetch_block_header(block_hash,
             pyfunction<const std::error_code&,
                 const bc::message::block&>(handle_fetch));
+    }
+    void fetch_block_transaction_hashes_by_depth(size_t depth,
+        python::object handle_fetch)
+    {
+        chain_->fetch_block_transaction_hashes(depth,
+            pyfunction<const std::error_code&,
+                const bc::message::inventory_list&>(handle_fetch));
+    }
+    void fetch_block_transaction_hashes_by_hash(
+        const bc::hash_digest& block_hash, python::object handle_fetch)
+    {
+        chain_->fetch_block_transaction_hashes(block_hash,
+            pyfunction<const std::error_code&,
+                const bc::message::inventory_list&>(handle_fetch));
     }
     void fetch_block_depth(const bc::hash_digest& block_hash,
         python::object handle_fetch)
@@ -1314,9 +1328,14 @@ BOOST_PYTHON_MODULE(_bitcoin)
     def("setup_bdb_blockchain", setup_bdb_blockchain);
     class_<blockchain_wrapper>("blockchain", no_init)
         .def("store", &blockchain_wrapper::store)
-        .def("fetch_block_by_depth",
-            &blockchain_wrapper::fetch_block_by_depth)
-        .def("fetch_block_by_hash", &blockchain_wrapper::fetch_block_by_hash)
+        .def("fetch_block_header_by_depth",
+            &blockchain_wrapper::fetch_block_header_by_depth)
+        .def("fetch_block_header_by_hash",
+            &blockchain_wrapper::fetch_block_header_by_hash)
+        .def("fetch_block_transaction_hashes_by_depth",
+            &blockchain_wrapper::fetch_block_transaction_hashes_by_depth)
+        .def("fetch_block_transaction_hashes_by_hash",
+            &blockchain_wrapper::fetch_block_transaction_hashes_by_hash)
         .def("fetch_block_depth", &blockchain_wrapper::fetch_block_depth)
         .def("fetch_last_depth", &blockchain_wrapper::fetch_last_depth)
         .def("fetch_block_locator", &blockchain_wrapper::fetch_block_locator)
