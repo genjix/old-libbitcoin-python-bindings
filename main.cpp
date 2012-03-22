@@ -829,6 +829,30 @@ private:
     bc::blockchain_ptr chain_;
 };
 
+void fetch_block_by_depth(blockchain_wrapper chain, size_t depth,
+    python::object handle_fetch)
+{
+    bc::fetch_block(chain.chain(), depth,
+        pyfunction<const std::error_code&,
+            const bc::message::block&>(handle_fetch));
+}
+
+void fetch_block_by_hash(blockchain_wrapper chain,
+    const bc::hash_digest& block_hash, python::object handle_fetch)
+{
+    bc::fetch_block(chain.chain(), block_hash,
+        pyfunction<const std::error_code&,
+            const bc::message::block&>(handle_fetch));
+}
+
+void fetch_block_locator(blockchain_wrapper chain,
+    python::object handle_fetch)
+{
+    bc::fetch_block_locator(chain.chain(),
+        pyfunction<const std::error_code&,
+            const bc::message::block_locator&>(handle_fetch));
+}
+
 blockchain_wrapper create_bdb_blockchain(async_service_wrapper service,
     const std::string& prefix)
 {
@@ -1347,6 +1371,9 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("subscribe_reorganize",
             &blockchain_wrapper::subscribe_reorganize)
     ;
+    def("fetch_block_by_depth", fetch_block_by_depth);
+    def("fetch_block_by_hash", fetch_block_by_hash);
+    def("fetch_block_locator", fetch_block_locator);
     // async_service
     class_<async_service_wrapper>("async_service")
         .def(init<size_t>())
