@@ -999,6 +999,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
     ;
     // address.hpp
     def("public_key_to_address", bc::public_key_to_address);
+    def("public_key_hash_to_address", bc::public_key_hash_to_address);
     def("address_to_short_hash", bc::address_to_short_hash);
     // block.hpp
     enum_<bc::block_status>("block_status")
