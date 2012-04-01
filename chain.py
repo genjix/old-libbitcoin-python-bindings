@@ -25,7 +25,7 @@ class sync_blockchain:
 
     def block_by_depth(self, depth):
         self.fetched_item = None
-        self.chain.fetch_block_by_depth(depth,
+        self.chain.fetch_block_header_by_depth(depth,
             self.handle_fetch_block_by_depth)
         self.stall()
         return self.fetched_item

@@ -479,6 +479,12 @@ public:
                 ph::_1, handle_channel));
     }
 
+    template <typename Message>
+    void broadcast(const Message& packet)
+    {
+        protocol_->broadcast(packet);
+    }
+
     bc::protocol_ptr prot()
     {
         return protocol_;
@@ -965,6 +971,11 @@ private:
     bc::session_ptr session_;
 };
 
+bc::short_hash payment_address_hash(const bc::payment_address& pa)
+{
+    return pa.hash();
+}
+
 BOOST_PYTHON_MODULE(_bitcoin)
 {
     PyEval_InitThreads();
@@ -998,9 +1009,16 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("count", &atomic_counter_wrapper::count)
     ;
     // address.hpp
-    def("public_key_to_address", bc::public_key_to_address);
-    def("public_key_hash_to_address", bc::public_key_hash_to_address);
-    def("address_to_short_hash", bc::address_to_short_hash);
+    class_<bc::payment_address>("payment_address")
+        .def("set_public_key", &bc::payment_address::set_public_key)
+        .def("set_public_key_hash", &bc::payment_address::set_public_key_hash)
+        .def("set_script", &bc::payment_address::set_script)
+        .def("set_script_hash", &bc::payment_address::set_script_hash)
+        .def("set_encoded", &bc::payment_address::set_encoded)
+        .def("encoded", &bc::payment_address::encoded)
+        .def("type", &bc::payment_address::type)
+        .def("hash", payment_address_hash)
+    ;
     // block.hpp
     enum_<bc::block_status>("block_status")
         .value("orphan", bc::block_status::orphan)
@@ -1187,6 +1205,41 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .value("checksig", bc::opcode::checksig)
         .value("codeseparator", bc::opcode::codeseparator)
         .value("bad_operation", bc::opcode::bad_operation)
+        .value("raw_data", bc::opcode::raw_data)
+        .value("special", bc::opcode::special)
+        .value("pushdata1", bc::opcode::pushdata1)
+        .value("pushdata2", bc::opcode::pushdata2)
+        .value("pushdata4", bc::opcode::pushdata4)
+        .value("op_1", bc::opcode::op_1)
+        .value("op_2", bc::opcode::op_2)
+        .value("op_3", bc::opcode::op_3)
+        .value("op_4", bc::opcode::op_4)
+        .value("op_5", bc::opcode::op_5)
+        .value("op_6", bc::opcode::op_6)
+        .value("op_7", bc::opcode::op_7)
+        .value("op_8", bc::opcode::op_8)
+        .value("op_9", bc::opcode::op_9)
+        .value("op_10", bc::opcode::op_10)
+        .value("op_11", bc::opcode::op_11)
+        .value("op_12", bc::opcode::op_12)
+        .value("op_13", bc::opcode::op_13)
+        .value("op_14", bc::opcode::op_14)
+        .value("op_15", bc::opcode::op_15)
+        .value("op_16", bc::opcode::op_16)
+        .value("nop", bc::opcode::nop)
+        .value("drop", bc::opcode::drop)
+        .value("dup", bc::opcode::dup)
+        .value("min", bc::opcode::min)
+        .value("sha256", bc::opcode::sha256)
+        .value("hash160", bc::opcode::hash160)
+        .value("equal", bc::opcode::equal)
+        .value("equalverify", bc::opcode::equalverify)
+        .value("checksig", bc::opcode::checksig)
+        .value("checksigverify", bc::opcode::checksigverify)
+        .value("checkmultisig", bc::opcode::checkmultisig)
+        .value("checkmultisigverify", bc::opcode::checkmultisigverify)
+        .value("codeseparator", bc::opcode::codeseparator)
+        .value("bad_operation", bc::opcode::bad_operation)
     ;
     class_<bc::operation>("operation")
         .def_readwrite("code", &bc::operation::code)
@@ -1229,7 +1282,6 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .value("missing_object", bc::error::missing_object)
         .value("object_already_exists", bc::error::object_already_exists)
         .value("unspent_output", bc::error::unspent_output)
-        .value("bad_transaction", bc::error::bad_transaction)
         .value("resolve_failed", bc::error::resolve_failed)
         .value("network_unreachable", bc::error::network_unreachable)
         .value("address_in_use", bc::error::address_in_use)
@@ -1238,6 +1290,41 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .value("bad_stream", bc::error::bad_stream)
         .value("channel_stopped", bc::error::channel_stopped)
         .value("channel_timeout", bc::error::channel_timeout)
+        .value("missing_object", bc::error::missing_object)
+        .value("object_already_exists", bc::error::object_already_exists)
+        .value("unspent_output", bc::error::unspent_output)
+        .value("resolve_failed", bc::error::resolve_failed)
+        .value("network_unreachable", bc::error::network_unreachable)
+        .value("address_in_use", bc::error::address_in_use)
+        .value("listen_failed", bc::error::listen_failed)
+        .value("accept_failed", bc::error::accept_failed)
+        .value("bad_stream", bc::error::bad_stream)
+        .value("channel_stopped", bc::error::channel_stopped)
+        .value("channel_timeout", bc::error::channel_timeout)
+        .value("coinbase_transaction", bc::error::coinbase_transaction)
+        .value("is_not_standard", bc::error::is_not_standard)
+        .value("double_spend", bc::error::double_spend)
+        .value("input_not_found", bc::error::input_not_found)
+        .value("empty_transaction", bc::error::empty_transaction)
+        .value("output_value_overflow", bc::error::output_value_overflow)
+        .value("invalid_coinbase_script_size",
+            bc::error::invalid_coinbase_script_size)
+        .value("previous_output_null", bc::error::previous_output_null)
+        .value("previous_block_invalid", bc::error::previous_block_invalid)
+        .value("size_limits", bc::error::size_limits)
+        .value("proof_of_work", bc::error::proof_of_work)
+        .value("futuristic_timestamp", bc::error::futuristic_timestamp)
+        .value("first_not_coinbase", bc::error::first_not_coinbase)
+        .value("extra_coinbases", bc::error::extra_coinbases)
+        .value("too_many_sigs", bc::error::too_many_sigs)
+        .value("merkle_mismatch", bc::error::merkle_mismatch)
+        .value("incorrect_proof_of_work", bc::error::incorrect_proof_of_work)
+        .value("timestamp_too_early", bc::error::timestamp_too_early)
+        .value("checkpoints_failed", bc::error::checkpoints_failed)
+        .value("duplicate_or_spent", bc::error::duplicate_or_spent)
+        .value("validate_inputs_failed", bc::error::validate_inputs_failed)
+        .value("fees_out_of_range", bc::error::fees_out_of_range)
+        .value("coinbase_too_large", bc::error::coinbase_too_large)
     ;
     class_<std::error_code>("error_code", init<bc::error::error_code_t>())
         .def("__str__", &std::error_code::message)
@@ -1310,6 +1397,8 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("fetch_connection_count",
             &protocol_wrapper::fetch_connection_count)
         .def("subscribe_channel", &protocol_wrapper::subscribe_channel)
+        .def("broadcast_transaction",
+            &protocol_wrapper::broadcast<bc::message::transaction>)
     ;
     // exporter.hpp
     def("satoshi_exporter", create_satoshi_exporter);
