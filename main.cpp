@@ -534,17 +534,38 @@ ClassType& extend_vector(ClassType& pyclass)
 }
 
 template <typename HashType>
-static bool hash_eq(const HashType& h, const char* other_repr)
+static int hash_cmp(const HashType& h, python::object other)
 {
-    return bc::pretty_hex(h) == other_repr;
+    python::extract<const HashType&> ohe(other);
+    if (ohe.check())
+    {
+        const HashType& oh = ohe();
+        if (h < oh)
+            return -1;
+        else if (h > oh)
+            return 1;
+        return 0;
+    }
+    else
+    {
+        std::string other_repr = python::extract<std::string>(other);
+        std::string h_repr = bc::pretty_hex(h);
+        if (h_repr < other_repr)
+            return -1;
+        else if (h_repr > other_repr)
+            return 1;
+        BITCOIN_ASSERT(h_repr == other_repr);
+        return 0;
+    }
+    //return bc::pretty_hex(h) == other_repr;
 }
 static bool hash_digest_nonzero(const bc::hash_digest& h)
 {
-    return h == bc::null_hash;
+    return h != bc::null_hash;
 }
 static bool short_hash_nonzero(const bc::short_hash& h)
 {
-    return h == bc::null_short_hash;
+    return h != bc::null_short_hash;
 }
 
 template <typename HashType, typename ClassType>
@@ -556,7 +577,7 @@ ClassType& extend_hash(ClassType& pyclass)
         .def("__len__", &HashType::size)
         .def("__getitem__", &std_item<HashType>::get)
         .def("__setitem__", &std_item<HashType>::set)
-        .def("__eq__", hash_eq<HashType>)
+        .def("__cmp__", hash_cmp<HashType>)
         .add_property("raw", raw_list<HashType>, set_raw_hash<HashType>)
     ;
     return pyclass;
