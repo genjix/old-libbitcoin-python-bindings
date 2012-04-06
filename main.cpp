@@ -959,6 +959,7 @@ class session_wrapper
 {
 public:
     session_wrapper(
+        async_service_wrapper service,
         hosts_wrapper hsts,
         handshake_wrapper h,
         network_wrapper n,
@@ -975,7 +976,7 @@ public:
         p.poller_ = pl.p();
         p.blockchain_ = chain.chain();
         p.transaction_pool_ = tp.p();
-        session_ = std::make_shared<bc::session>(p);
+        session_ = std::make_shared<bc::session>(*service.s, p);
     }
 
     void start(python::object handle_complete)
@@ -1503,6 +1504,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
     ;
     // session
     class_<session_wrapper>("session", init<
+        async_service_wrapper,
         hosts_wrapper,
         handshake_wrapper,
         network_wrapper,
