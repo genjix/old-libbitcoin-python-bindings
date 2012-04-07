@@ -2,7 +2,6 @@
 namespace python = boost::python;
 
 #include <bitcoin/bitcoin.hpp>
-#include <bitcoin/blockchain/bdb_blockchain.hpp>
 namespace ph = std::placeholders;
 
 class ensure_gil
@@ -816,10 +815,10 @@ public:
             pyfunction<const std::error_code&,
                 const bc::message::input_point&>(handle_fetch));
     }
-    void fetch_outputs(const bc::short_hash& pubkey_hash,
+    void fetch_outputs(const bc::payment_address& address,
         python::object handle_fetch)
     {
-        chain_->fetch_outputs(pubkey_hash,
+        chain_->fetch_outputs(address,
             pyfunction<const std::error_code&,
                 const bc::message::output_point_list&>(handle_fetch));
     }
@@ -1304,6 +1303,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .value("missing_object", bc::error::missing_object)
         .value("duplicate", bc::error::duplicate)
         .value("unspent_output", bc::error::unspent_output)
+        .value("unsupported_payment_type", bc::error::unsupported_payment_type)
         .value("resolve_failed", bc::error::resolve_failed)
         .value("network_unreachable", bc::error::network_unreachable)
         .value("address_in_use", bc::error::address_in_use)
