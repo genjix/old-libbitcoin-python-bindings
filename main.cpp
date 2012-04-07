@@ -1031,14 +1031,19 @@ BOOST_PYTHON_MODULE(_bitcoin)
     ;
     // address.hpp
     class_<bc::payment_address>("payment_address")
-        .def("set_public_key", &bc::payment_address::set_public_key)
-        .def("set_public_key_hash", &bc::payment_address::set_public_key_hash)
-        .def("set_script", &bc::payment_address::set_script)
-        .def("set_script_hash", &bc::payment_address::set_script_hash)
+        .def(init<bc::payment_type, const bc::short_hash&>())
+        .def(init<const std::string&>())
+        .def("set", &bc::payment_address::set)
+        .def("set_raw", &bc::payment_address::set_raw)
+        .def("set_public_key", &bc::set_public_key)
+        .def("set_public_key_hash", &bc::set_public_key_hash)
+        .def("set_script", &bc::set_script)
+        .def("set_script_hash", &bc::set_script_hash)
         .def("set_encoded", &bc::payment_address::set_encoded)
         .def("encoded", &bc::payment_address::encoded)
         .def("type", &bc::payment_address::type)
         .def("hash", payment_address_hash)
+        .def("version", payment_address_hash)
     ;
     // block.hpp
     enum_<bc::block_status>("block_status")
