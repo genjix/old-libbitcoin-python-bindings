@@ -879,11 +879,20 @@ void fetch_block_locator(blockchain_wrapper chain,
             const bc::message::block_locator&>(handle_fetch));
 }
 
+void handle_bdb_blockchain_start(const std::error_code& ec,
+    bc::blockchain_ptr chain, python::object handle_start)
+{
+    ensure_gil eg;
+    pyfunction<const std::error_code&, blockchain_wrapper> f(handle_start);
+    f(ec, blockchain_wrapper(chain));
+}
 blockchain_wrapper create_bdb_blockchain(async_service_wrapper service,
-    const std::string& prefix)
+    const std::string& prefix, python::object handle_start)
 {
     return blockchain_wrapper(
-        bc::bdb_blockchain::create(*service.s, prefix));
+        bc::bdb_blockchain::create(*service.s, prefix,
+            std::bind(handle_bdb_blockchain_start,
+                ph::_1, ph::_2, handle_start)));
 }
 bool setup_bdb_blockchain(const std::string& prefix)
 {
@@ -1044,6 +1053,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("type", &bc::payment_address::type)
         .def("hash", payment_address_hash)
         .def("version", payment_address_hash)
+        .def("extract", bc::extract)
     ;
     // block.hpp
     enum_<bc::block_status>("block_status")
