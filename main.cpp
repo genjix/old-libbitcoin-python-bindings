@@ -304,7 +304,6 @@ private:
     static void post_listen(const std::error_code& ec,
         bc::acceptor_ptr accept, python::object handle_listen)
     {
-        ensure_gil eg;
         pyfunction<const std::error_code&,
             acceptor_wrapper> f(handle_listen);
         f(ec, acceptor_wrapper(accept));
@@ -312,7 +311,6 @@ private:
     static void post_connect(const std::error_code& ec,
         bc::channel_ptr node, python::object handle_connect)
     {
-        ensure_gil eg;
         pyfunction<const std::error_code&,
             channel_wrapper> f(handle_connect);
         f(ec, channel_wrapper(node));
@@ -376,7 +374,6 @@ private:
     static void post_connect(const std::error_code& ec,
         bc::channel_ptr node, python::object handle_connect)
     {
-        ensure_gil eg;
         pyfunction<const std::error_code&,
             channel_wrapper> f(handle_connect);
         f(ec, channel_wrapper(node));
@@ -492,7 +489,6 @@ private:
     static void post_new_channel(bc::channel_ptr node,
         python::object handle_channel)
     {
-        ensure_gil eg;
         pyfunction<channel_wrapper> f(handle_channel);
         f(channel_wrapper(node));
     }
@@ -861,7 +857,6 @@ private:
             py_arrivals.append(*blk);
         for (auto blk: replaced)
             py_replaced.append(*blk);
-        ensure_gil eg;
         pyfunction<const std::error_code&, size_t, python::list, python::list>
             f(handle_reorganize);
         f(ec, fork_point, py_arrivals, py_replaced);
@@ -897,7 +892,6 @@ void fetch_block_locator(blockchain_wrapper chain,
 void handle_bdb_blockchain_start(const std::error_code& ec,
     bc::blockchain_ptr chain, python::object handle_start)
 {
-    ensure_gil eg;
     pyfunction<const std::error_code&, blockchain_wrapper> f(handle_start);
     f(ec, blockchain_wrapper(chain));
 }
