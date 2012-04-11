@@ -532,6 +532,21 @@ ClassType& extend_vector(ClassType& pyclass)
     return pyclass;
 }
 
+int point_cmp(const bc::message::output_point& a,
+    const bc::message::output_point& b)
+{
+    if (a.index < b.index)
+        return -1;
+    else if (a.index > b.index)
+        return 1;
+    // a.index == b.index
+    if (a.hash < b.hash)
+        return -1;
+    else if (a.hash > b.hash)
+        return 1;
+    return 0;
+}
+
 template <typename HashType>
 static int hash_cmp(const HashType& h, python::object other)
 {
@@ -1159,6 +1174,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def_readwrite("hash", &bc::message::input_point::hash)
         .def_readwrite("index", &bc::message::input_point::index)
         .def("__repr__", pretty_input_point)
+        .def("__cmp__", point_cmp)
     ;
     // output_point defined in python wrapper
     auto output_point_list_class =
