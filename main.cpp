@@ -1069,6 +1069,8 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("hash", payment_address_hash)
         .def("version", payment_address_hash)
         .def("extract", bc::extract)
+        .def("__str__", &bc::payment_address::encoded)
+        .def("__repr__", &bc::payment_address::encoded)
     ;
     // block.hpp
     enum_<bc::block_status>("block_status")
