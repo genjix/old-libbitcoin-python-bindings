@@ -30,25 +30,38 @@ class AsyncService(threading.Thread):
         super(AsyncService, self).__init__()
         self.daemon = True
         self.start()
+        self.alive_lock = threading.Lock()
+        self.alives = []
 
     def run(self):
         while True:
             work = self.queue.get()
             work()
             self.queue.task_done()
+            with self.alive_lock:
+                self.alives = [obj for obj in self.alives if not obj.stopped()]
 
     def post(self, handler):
         self.queue.put(handler)
+
+    def keep_alive(self, obj):
+        with self.alive_lock:
+            self.alives.append(obj)
 
 class ForwardWrap:
 
     def __init__(self, execute, handler):
         self.execute = execute
         self.handler = handler
+        self._stopped = False
 
     def __call__(self, *args):
         self.handler.bind(args)
         self.execute(self.handler)
+        self._stopped = True
+
+    def stopped(self):
+        return self._stopped
 
 class Composed:
 
@@ -76,12 +89,14 @@ class Strand:
 
     def execute(self, handler):
         with self.exclude:
-            handler()
+            self.service.post(handler)
 
     def post(self, handler):
         self.service.post(bind(self.execute, handler))
 
     def wrap(self, handler, *args):
         bounded = Composed(handler, args)
-        return ForwardWrap(self.execute, bounded)
+        fwrap = ForwardWrap(self.execute, bounded)
+        self.service.keep_alive(fwrap)
+        return fwrap
 
