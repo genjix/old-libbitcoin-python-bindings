@@ -46,8 +46,23 @@ class ForwardWrap:
         self.execute = execute
         self.handler = handler
 
-    def __call__(self, *args):
-        self.execute(bind(self.handler, *args))
+    def __call__(self, *args, **kwargs):
+        self.handler.bind(args, kwargs)
+        self.execute(self.handler)
+
+class Composed:
+
+    def __init__(self, handler, args, kwargs):
+        self.handler = handler
+        self.args = args
+        self.kwargs = kwargs
+
+    def bind(self, args, kwargs):
+        self.args += args
+        self.kwargs = dict(self.kwargs.items() + kwargs.items())
+
+    def __call__(self):
+        self.handler(*self.args, **self.kwargs)
 
 class Strand:
 
@@ -62,6 +77,7 @@ class Strand:
     def post(self, handler):
         self.service.post(bind(self.execute, handler))
 
-    def wrap(self, handler):
-        return ForwardWrap(self.execute, handler)
+    def wrap(self, handler, *args, **kwargs):
+        bounded = Composed(handler, args, kwargs)
+        return ForwardWrap(self.execute, bounded)
 
