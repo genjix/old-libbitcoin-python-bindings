@@ -161,33 +161,7 @@ struct async_service_wrapper
     {
         s->shutdown();
     }
-    void post(python::object handler)
-    {
-        s->get_service().post(pyfunction<>(handler));
-    }
-    void dispatch(python::object handler)
-    {
-        s->get_service().dispatch(pyfunction<>(handler));
-    }
     std::shared_ptr<bc::async_service> s;
-};
-
-struct strand_wrapper
-{
-    strand_wrapper(async_service_wrapper service)
-    {
-        strand_ = std::make_shared<boost::asio::io_service::strand>(
-            service.s->get_service());
-    }
-    void post(python::object handler)
-    {
-        strand_->post(pyfunction<>(handler));
-    }
-    void dispatch(python::object handler)
-    {
-        strand_->dispatch(pyfunction<>(handler));
-    }
-    std::shared_ptr<boost::asio::io_service::strand> strand_;
 };
 
 class acceptor_wrapper
@@ -1543,12 +1517,6 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def(init<size_t>())
         .def("spawn", &async_service_wrapper::spawn)
         .def("shutdown", &async_service_wrapper::shutdown)
-        .def("post", &async_service_wrapper::post)
-        .def("dispatch", &async_service_wrapper::dispatch)
-    ;
-    class_<strand_wrapper>("strand_wrapper", init<async_service_wrapper>())
-        .def("post", &strand_wrapper::post)
-        .def("dispatch", &strand_wrapper::dispatch)
     ;
     // poller
     class_<poller_wrapper>("poller", init<blockchain_wrapper>())
