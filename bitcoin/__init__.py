@@ -22,3 +22,17 @@ def short_hash(strval):
         raise indexerror("length of short_hash representation should be 2 * 20 characters")
     return short_hash_from_pretty(strval)
 
+class wrapped_callable:
+
+    def __init__(self, strand, handler):
+        self.strand = strand
+        self.handler = handler
+
+    def __call__(self, *args):
+        self.strand.dispatch(bind(self.handler, *args))
+
+class strand(strand_wrapper):
+
+    def wrap(self, handler):
+        return wrapped_callable(self, handler)
+
