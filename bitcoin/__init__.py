@@ -1,6 +1,6 @@
 import threading, Queue as queue
 from _bitcoin import *
-from bind import bind, _1, _2, _3
+from bind import bind, _1, _2, _3, placeholder
 
 # Turn off libbitcoin output
 disable_logging()
@@ -46,23 +46,27 @@ class ForwardWrap:
         self.execute = execute
         self.handler = handler
 
-    def __call__(self, *args, **kwargs):
-        self.handler.bind(args, kwargs)
+    def __call__(self, *args):
+        self.handler.bind(args)
         self.execute(self.handler)
 
 class Composed:
 
-    def __init__(self, handler, args, kwargs):
+    def __init__(self, handler, args):
         self.handler = handler
         self.args = args
-        self.kwargs = kwargs
 
-    def bind(self, args, kwargs):
-        self.args += args
-        self.kwargs = dict(self.kwargs.items() + kwargs.items())
+    def bind(self, args):
+        new_args = []
+        for arg in self.args:
+            if isinstance(arg, placeholder):
+                new_args.append(args[arg.pos])
+            else:
+                new_args.append(arg)
+        self.args = new_args
 
     def __call__(self):
-        self.handler(*self.args, **self.kwargs)
+        self.handler(*self.args)
 
 class Strand:
 
@@ -77,7 +81,7 @@ class Strand:
     def post(self, handler):
         self.service.post(bind(self.execute, handler))
 
-    def wrap(self, handler, *args, **kwargs):
-        bounded = Composed(handler, args, kwargs)
+    def wrap(self, handler, *args):
+        bounded = Composed(handler, args)
         return ForwardWrap(self.execute, bounded)
 
