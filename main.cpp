@@ -962,6 +962,14 @@ public:
             pyfunction<const std::error_code&>(handle_store));
     }
 
+    void fetch(const bc::hash_digest& tx_hash,
+        python::object handle_fetch)
+    {
+        pool_->fetch(tx_hash,
+            pyfunction<const std::error_code&,
+                const bc::message::transaction&>(handle_fetch));
+    }
+
     void exists(const bc::hash_digest& tx_hash,
         python::object handle_exists)
     {
@@ -1526,6 +1534,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
     class_<transaction_pool_wrapper>("transaction_pool",
             init<async_service_wrapper, blockchain_wrapper>())
         .def("store", &transaction_pool_wrapper::store)
+        .def("fetch", &transaction_pool_wrapper::fetch)
         .def("exists", &transaction_pool_wrapper::exists)
     ;
     // session
