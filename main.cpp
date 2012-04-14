@@ -120,6 +120,10 @@ public:
     {
         return eca == err;
     }
+    static bool ne(const std::error_code& eca, bc::error::error_code_t err)
+    {
+        return eca != err;
+    }
 };
 
 class atomic_counter_wrapper
@@ -1377,6 +1381,7 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("__repr__", &std::error_code::message)
         .def("__nonzero__", &error_code_wrapper::nonzero)
         .def("__eq__", &error_code_wrapper::eq)
+        .def("__ne__", &error_code_wrapper::ne)
     ;
     // network stuff
     class_<acceptor_wrapper>("acceptor", no_init)
