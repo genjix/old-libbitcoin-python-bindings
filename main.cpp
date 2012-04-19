@@ -921,9 +921,9 @@ std::string pretty_input_point(const bc::message::input_point& inpoint)
 class poller_wrapper
 {
 public:
-    poller_wrapper(blockchain_wrapper chain)
+    poller_wrapper(async_service_wrapper srv, blockchain_wrapper chain)
     {
-        poll_ = std::make_shared<bc::poller>(chain.chain());
+        poll_ = std::make_shared<bc::poller>(*srv.s, chain.chain());
     }
     void query(channel_wrapper node)
     {
@@ -1522,7 +1522,8 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("shutdown", &async_service_wrapper::shutdown)
     ;
     // poller
-    class_<poller_wrapper>("poller", init<blockchain_wrapper>())
+    class_<poller_wrapper>("poller",
+            init<async_service_wrapper, blockchain_wrapper>())
         .def("query", &poller_wrapper::query)
     ;
     // transaction_pool
