@@ -165,7 +165,7 @@ struct async_service_wrapper
     {
         s->shutdown();
     }
-    std::shared_ptr<bc::async_service> s;
+    bc::async_service_ptr s;
 };
 
 class acceptor_wrapper
@@ -1511,7 +1511,9 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("fetch_outputs", &blockchain_wrapper::fetch_outputs)
         .def("subscribe_reorganize",
             &blockchain_wrapper::subscribe_reorganize)
+        .add_property("internal_ptr", &blockchain_wrapper::chain)
     ;
+    class_<bc::blockchain_ptr>("internal_blockchain", no_init);
     def("fetch_block_by_depth", fetch_block_by_depth);
     def("fetch_block_by_hash", fetch_block_by_hash);
     def("fetch_block_locator", fetch_block_locator);
@@ -1520,7 +1522,9 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def(init<size_t>())
         .def("spawn", &async_service_wrapper::spawn)
         .def("shutdown", &async_service_wrapper::shutdown)
+        .def_readonly("internal_ptr", &async_service_wrapper::s)
     ;
+    class_<bc::async_service_ptr>("internal_async_service", no_init);
     // poller
     class_<poller_wrapper>("poller",
             init<async_service_wrapper, blockchain_wrapper>())
@@ -1532,7 +1536,9 @@ BOOST_PYTHON_MODULE(_bitcoin)
         .def("store", &transaction_pool_wrapper::store)
         .def("fetch", &transaction_pool_wrapper::fetch)
         .def("exists", &transaction_pool_wrapper::exists)
+        .add_property("internal_ptr", &transaction_pool_wrapper::p)
     ;
+    class_<bc::transaction_pool_ptr>("internal_transaction_pool", no_init);
     // session
     class_<session_wrapper>("session", init<
         async_service_wrapper,
