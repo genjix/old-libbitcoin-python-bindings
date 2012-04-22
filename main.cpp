@@ -543,6 +543,12 @@ static bool short_hash_nonzero(const bc::short_hash& h)
     return h != bc::null_short_hash;
 }
 
+template <typename HashType>
+static int hash__hash__(const HashType& h)
+{
+    return bc::cast_chunk<int>(bc::data_chunk(h.end() - sizeof(int), h.end()));
+}
+
 template <typename HashType, typename ClassType>
 ClassType& extend_hash(ClassType& pyclass)
 {
@@ -553,6 +559,7 @@ ClassType& extend_hash(ClassType& pyclass)
         .def("__getitem__", &std_item<HashType>::get)
         .def("__setitem__", &std_item<HashType>::set)
         .def("__cmp__", hash_cmp<HashType>)
+        .def("__hash__", hash__hash__<HashType>)
         .add_property("raw", raw_list<HashType>, set_raw_hash<HashType>)
     ;
     return pyclass;
