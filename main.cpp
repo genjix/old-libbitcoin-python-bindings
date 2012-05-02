@@ -931,7 +931,8 @@ public:
     {
         pool_->store(tx,
             pyfunction<const std::error_code&>(handle_confirm),
-            pyfunction<const std::error_code&>(handle_store));
+            pyfunction<const std::error_code&,
+                const bc::index_list&>(handle_store));
     }
 
     void fetch(const bc::hash_digest& tx_hash,
@@ -1059,11 +1060,11 @@ BOOST_PYTHON_MODULE(_bitcoin)
     def("block_value", bc::block_value);
     def("block_work", bc::block_work);
     def("hash_block_header", bc::hash_block_header);
-    auto indices_list_class =
-        class_<bc::indices_list>("indices_list")
+    auto index_list_class =
+        class_<bc::index_list>("index_list")
         ;
-    extend_vector<bc::indices_list>(indices_list_class);
-    def("block_locator_indices", bc::block_locator_indices);
+    extend_vector<bc::index_list>(index_list_class);
+    def("block_locator_indexes", bc::block_locator_indexes);
     def("genesis_block", bc::genesis_block);
     // constants.hpp
     scope().attr("block_reward") = bc::block_reward;
